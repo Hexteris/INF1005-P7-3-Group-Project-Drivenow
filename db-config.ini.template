@@ -1,0 +1,9 @@
+; DriveNow - Database Configuration
+; Upload this to /var/www/private/db-config.ini on your GCP VM
+; Permissions: sudo chown www-data:www-data /var/www/private/db-config.ini && sudo chmod 640 /var/www/private/db-config.ini
+
+[database]
+servername = localhost
+username   = drivenow-db
+password   = drivenow-db@123
+dbname     = car_rental
