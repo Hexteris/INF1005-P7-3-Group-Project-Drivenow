@@ -1,0 +1,9 @@
+# DO NOT upload these to Git
+.vscode/sftp.json
+/var/www/private/db-config.ini
+*.ini
+.DS_Store
+node_modules/
+.env
+*.log
+*.sql
