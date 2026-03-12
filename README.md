@@ -130,4 +130,3 @@ sudo chmod -R 755 /var/www/html
 - Session regeneration on login (prevents session fixation)
 - Server-side validation on all forms
 - Admin panel fully separated from member area
-
