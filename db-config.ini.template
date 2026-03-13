@@ -1,9 +1,29 @@
-; DriveNow - Database Configuration
-; Upload this to /var/www/private/db-config.ini on your GCP VM
-; Permissions: sudo chown www-data:www-data /var/www/private/db-config.ini && sudo chmod 640 /var/www/private/db-config.ini
+; INSTRUCTIONS FOR TEAM MEMBERS:
+; ------------------------------
+; 1. COPY THIS FILE TO: db-config.ini (remove the .template extension)
+; 2. PLACE IT IN A 'private' FOLDER OUTSIDE YOUR WEB ROOT
+;    - Local (XAMPP): C:/xampp/private/db-config.ini
+;    - VM (GCP): /var/www/private/db-config.ini
+; 3. USE RELATIVE PATHS IN PHP: __DIR__ . '/../private/db-config.ini'
+;
+; SECURITY NOTE:
+; - This file contains LOCAL development credentials only (XAMPP default)
+; - DO NOT commit db-config.ini to GitHub (add it to .gitignore!)
+; - The Integration Lead must manually set VM credentials during deployment
+
 
 [database]
+; Server hostname - localhost works for XAMPP
 servername = localhost
-username   = drivenow-db
-password   = drivenow-db@123
-dbname     = car_rental
+
+; Database username
+; IMPORTANT: Use "root" for XAMPP (local)
+username = root
+
+; Database password
+; IMPORTANT: Leave empty for XAMPP (localhost default)
+password = 
+
+; Database name - MUST match setup.sql import for all team members
+dbname = car_rental
+
