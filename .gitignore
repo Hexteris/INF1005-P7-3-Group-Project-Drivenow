@@ -1,0 +1,20 @@
+# Sensitive config - never commit
+db-config.ini
+db-config.ini.template
+
+# VS Code SFTP credentials
+.vscode/sftp.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Uploaded images stay on server, don't overwrite via git
+/uploads/*
+!/uploads/.gitkeep
+
+# Node (if ever used)
+node_modules/
