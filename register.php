@@ -3,6 +3,7 @@ $pageTitle = 'Register';
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'includes/db-connect.php';
 require_once 'includes/auth.php';
+require_once 'includes/mailer.php';
 
 // Redirect if already logged in
 if (isLoggedIn()) { header("Location: " . BASE . "/my-bookings.php"); exit(); }
@@ -11,7 +12,6 @@ $errors = [];
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Sanitize inputs
     $full_name  = trim($_POST['full_name']  ?? '');
     $email      = trim($_POST['email']      ?? '');
     $phone      = trim($_POST['phone']      ?? '');
@@ -19,7 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password   = $_POST['password']        ?? '';
     $confirm    = $_POST['confirm_password'] ?? '';
 
-    // Server-side validation
     if (strlen($full_name) < 2)
         $errors['full_name'] = 'Full name must be at least 2 characters.';
     if (!filter_var($email, FILTER_VALIDATE_EMAIL))
@@ -30,7 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['confirm_password'] = 'Passwords do not match.';
 
     if (empty($errors)) {
-        // Check for duplicate email
         $stmt = $conn->prepare("SELECT member_id FROM members WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -40,14 +38,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors['email'] = 'This email is already registered.';
         } else {
             $stmt->close();
-            // Hash password and insert
             $hashed = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $conn->prepare(
                 "INSERT INTO members (full_name, email, password, phone, licence_no) VALUES (?, ?, ?, ?, ?)"
             );
             $stmt->bind_param("sssss", $full_name, $email, $hashed, $phone, $licence_no);
+
             if ($stmt->execute()) {
-                $success = 'Account created successfully! You can now log in.';
+                // Send simple welcome email
+                sendWelcomeEmail($email, $full_name);
+                $success = 'Account created successfully! You can now <a href="' . BASE . '/login.php">log in</a>.';
             } else {
                 $errors['general'] = 'Registration failed. Please try again.';
             }
@@ -71,7 +71,10 @@ require_once 'includes/header.php';
 <div class="container pb-5">
     <div class="dn-form-card">
         <?php if (!empty($success)): ?>
-            <div class="alert-success mb-4"><i class="bi bi-check-circle me-2"></i><?php echo h($success); ?> <a href="<?php echo BASE; ?>/login.php">Log in now →</a></div>
+            <div class="alert-success mb-4">
+                <i class="bi bi-check-circle me-2"></i>
+                <?php echo $success; ?>
+            </div>
         <?php endif; ?>
         <?php if (!empty($errors['general'])): ?>
             <div class="alert-error mb-4"><i class="bi bi-exclamation-triangle me-2"></i><?php echo h($errors['general']); ?></div>

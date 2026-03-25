@@ -8,13 +8,17 @@ USE car_rental;
 
 -- 1. Members
 CREATE TABLE IF NOT EXISTS members (
-    member_id   INT AUTO_INCREMENT PRIMARY KEY,
-    full_name   VARCHAR(100) NOT NULL,
-    email       VARCHAR(150) NOT NULL UNIQUE,
-    password    VARCHAR(255) NOT NULL,
-    phone       VARCHAR(20),
-    licence_no  VARCHAR(50) UNIQUE,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    member_id            INT AUTO_INCREMENT PRIMARY KEY,
+    full_name            VARCHAR(100) NOT NULL,
+    email                VARCHAR(150) NOT NULL UNIQUE,
+    password             VARCHAR(255) NOT NULL,
+    phone                VARCHAR(20),
+    licence_no           VARCHAR(50) UNIQUE,
+    email_verified       TINYINT(1)   NOT NULL DEFAULT 0,
+    verification_token   VARCHAR(128) NULL DEFAULT NULL,
+    verification_expires DATETIME     NULL DEFAULT NULL,
+    created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_verification_token (verification_token)
 );
 
 -- 2. Cars
@@ -88,9 +92,9 @@ INSERT INTO admin_users (username, password) VALUES
 -- NOTE: The hash above is a placeholder. Run the command below after setup:
 -- php /var/www/html/admin/gen-admin-hash.php
 
--- Sample member (password: Test@1234)
-INSERT INTO members (full_name, email, password, phone, licence_no) VALUES
-('Test User', 'test@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '+65 9999 0000', 'S9999999Z');
+-- Sample member (password: Test@1234) — pre-verified for testing
+INSERT INTO members (full_name, email, password, phone, licence_no, email_verified) VALUES
+    ('Test User', 'test@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '+65 9999 0000', 'S9999999Z', 1);
 
 -- ============================================================
 -- Payments table (added for payment feature)

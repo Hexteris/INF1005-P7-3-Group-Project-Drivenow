@@ -90,6 +90,49 @@ sudo chmod -R 755 /var/www/html
 
 ---
 
+## Email Verification (Registration)
+
+When a new user registers, a verification email is automatically sent to their address.
+The email contains a unique link (valid for 24 hours) that activates their account.
+
+### Setup: SMTP credentials in `db-config.ini`
+
+Add these lines to your existing `db-config.ini` file (the same one used for DB credentials):
+
+```ini
+; ── Email / SMTP ──────────────────────────────
+smtp_host = smtp.gmail.com
+smtp_user = your-email@gmail.com
+smtp_pass = your-app-password
+smtp_port = 587
+```
+
+> For Gmail, generate an **App Password** at https://myaccount.google.com/apppasswords
+> (requires 2FA to be enabled on your Google account).
+
+### Optional: PHPMailer (recommended for production)
+
+For reliable SMTP delivery, install PHPMailer via Composer in the project root:
+
+```bash
+composer require phpmailer/phpmailer
+```
+
+If PHPMailer is not installed, the system falls back to PHP's built-in `mail()` function
+(works on most shared hosting; SMTP above is ignored in this case).
+
+### Database migration (existing installs)
+
+If you already have the database set up, run the migration to add the new columns:
+
+```bash
+mysql -u root -p car_rental < migration_email_verification.sql
+```
+
+Fresh installs using `setup.sql` already include the new columns.
+
+---
+
 ## Security Features
 - Passwords hashed with `password_hash()` / `password_verify()`
 - All DB queries use **Prepared Statements** (prevents SQL Injection)
