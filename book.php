@@ -6,7 +6,7 @@ requireLogin();
 require_once 'includes/db-connect.php';
 
 // ── Replace with your real key ──────────────────────────────
-define('GMAPS_KEY', 'AIzaSyDAQKvkqDCX62vTR_oyGclCDQnMsnYOkg8');
+define('GMAPS_KEY', $_ENV['GMAPS_KEY'] ?? '');
 // ────────────────────────────────────────────────────────────
 
 $car_id = (int)($_GET['car_id'] ?? 0);

@@ -5,7 +5,7 @@ require_once 'includes/db-connect.php';
 require_once 'includes/auth.php';
 
 // ── Replace with your real key ──────────────────────────────
-define('GMAPS_KEY', 'AIzaSyDAQKvkqDCX62vTR_oyGclCDQnMsnYOkg8');
+define('GMAPS_KEY', $_ENV['GMAPS_KEY'] ?? '');
 // ────────────────────────────────────────────────────────────
 
 // Filter inputs
