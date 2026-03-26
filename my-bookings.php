@@ -19,15 +19,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_id'])) {
 }
 
 // Update bookings to 'completed' when end_time has passed
+date_default_timezone_set('Asia/Singapore');
 $now = date('Y-m-d H:i:s');
 $autoComplete = $conn->prepare("
     UPDATE bookings b
     INNER JOIN payments p ON b.booking_id = p.booking_id
     SET b.status = 'completed' 
     WHERE b.member_id = ? 
-    AND b.status IN ('confirmed') 
-    AND b.end_time < ?
-    AND p.status = 'paid'
+      AND b.status = 'confirmed'
+      AND b.end_time < ? 
+      AND p.status = 'paid'
 ");
 $autoComplete->bind_param("is", $member_id, $now);
 $autoComplete->execute();
