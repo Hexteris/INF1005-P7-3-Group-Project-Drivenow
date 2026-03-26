@@ -2,8 +2,12 @@
 $pageTitle = 'Book a Car';
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'includes/auth.php';
-requireLogin(); // Must be logged in
+requireLogin();
 require_once 'includes/db-connect.php';
+
+// ── Replace with your real key ──────────────────────────────
+define('GMAPS_KEY', 'AIzaSyDAQKvkqDCX62vTR_oyGclCDQnMsnYOkg8');
+// ────────────────────────────────────────────────────────────
 
 $car_id = (int)($_GET['car_id'] ?? 0);
 $error   = '';
@@ -26,7 +30,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $end_time   = $_POST['end_time']   ?? '';
     $total_cost = (float)($_POST['total_cost'] ?? 0);
 
-    // Validate
     if (empty($start_time) || empty($end_time)) {
         $error = 'Please select both start and end times.';
     } else {
@@ -43,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($hours < 1) {
                 $error = 'Minimum rental duration is 1 hour.';
             } else {
-                // Check for overlapping bookings
                 $chk = $conn->prepare("
                     SELECT booking_id FROM bookings
                     WHERE car_id = ? AND status != 'cancelled'
@@ -56,7 +58,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($chk->num_rows > 0) {
                     $error = 'This car is already booked for the selected time slot. Please choose different times.';
                 } else {
-                    // Calculate cost server-side (don't trust client)
                     $cost = round($hours * $car['price_per_hr'], 2);
                     $mid  = $_SESSION['member_id'];
 
@@ -82,6 +83,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $categoryIcons = ['Economy'=>'🚗','Comfort'=>'🚙','SUV'=>'🚐','Premium'=>'🏎️'];
+
+// Pickup coordinates (may be null if not set yet)
+$hasCoords = !empty($car['lat']) && !empty($car['lng']);
+$pickupLat = $hasCoords ? (float)$car['lat'] : null;
+$pickupLng = $hasCoords ? (float)$car['lng'] : null;
+
 require_once 'includes/header.php';
 ?>
 
@@ -94,16 +101,20 @@ require_once 'includes/header.php';
 
 <div class="container pb-5">
     <?php if (!empty($success)): ?>
-        <div class="alert-success mb-4"><i class="bi bi-check-circle me-2"></i><?php echo h($success); ?>
+        <div class="alert-success mb-4">
+            <i class="bi bi-check-circle me-2"></i><?php echo h($success); ?>
             <a href="<?php echo BASE; ?>/my-bookings.php">View My Bookings →</a>
         </div>
     <?php endif; ?>
     <?php if (!empty($error)): ?>
-        <div class="alert-error mb-4"><i class="bi bi-exclamation-triangle me-2"></i><?php echo h($error); ?></div>
+        <div class="alert-error mb-4">
+            <i class="bi bi-exclamation-triangle me-2"></i><?php echo h($error); ?>
+        </div>
     <?php endif; ?>
 
     <div class="row g-4">
-        <!-- Booking Form -->
+
+        <!-- ── Booking Form ───────────────────────────────── -->
         <div class="col-lg-7">
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;">
                 <h4 style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;margin-bottom:1.5rem;">Select Date &amp; Time</h4>
@@ -147,9 +158,10 @@ require_once 'includes/header.php';
             </div>
         </div>
 
-        <!-- Car Summary -->
+        <!-- ── Car Summary + Pickup Map ──────────────────── -->
         <div class="col-lg-5">
-            <div class="booking-summary-card">
+            <!-- Car summary card -->
+            <div class="booking-summary-card mb-4">
                 <div class="car-card-img mb-3" style="border-radius:var(--radius-sm);height:170px;">
                     <?php if (!empty($car['image_url'])): ?>
                         <img src="<?php echo h($car['image_url']); ?>" alt="Car"
@@ -174,6 +186,110 @@ require_once 'includes/header.php';
                     </div>
                 </div>
             </div>
+
+            <!-- ── Pickup Location Map ─────────────────── -->
+            <?php if ($hasCoords): ?>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+                <div style="padding:.8rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">
+                        <i class="bi bi-pin-map-fill me-2" style="color:#e63946;"></i>Pickup Location
+                    </span>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=<?php echo $pickupLat; ?>,<?php echo $pickupLng; ?>"
+                       target="_blank" rel="noopener"
+                       style="font-size:.78rem;color:#e63946;text-decoration:none;">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Get Directions
+                    </a>
+                </div>
+
+                <div id="pickupMap" style="width:100%;height:260px;"></div>
+
+                <div style="padding:.75rem 1.2rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.6rem;">
+                    <i class="bi bi-geo-alt-fill" style="color:#e63946;font-size:1rem;"></i>
+                    <span style="font-size:.88rem;font-weight:500;"><?php echo h($car['location']); ?></span>
+                    <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($car['location'] . ', Singapore'); ?>"
+                       target="_blank" rel="noopener"
+                       class="btn btn-sm ms-auto"
+                       style="background:var(--bg-raised);border:1px solid var(--border);color:var(--text);font-size:.78rem;">
+                        Open in Maps
+                    </a>
+                </div>
+            </div>
+
+            <!-- Google Maps JS -->
+            <script>
+            const PICKUP_LAT = <?php echo $pickupLat; ?>;
+            const PICKUP_LNG = <?php echo $pickupLng; ?>;
+            const PICKUP_LABEL = <?php echo json_encode($car['location']); ?>;
+
+            function initPickupMap() {
+                const pos = { lat: PICKUP_LAT, lng: PICKUP_LNG };
+
+                const map = new google.maps.Map(document.getElementById('pickupMap'), {
+                    center           : pos,
+                    zoom             : 15,
+                    mapTypeControl   : false,
+                    fullscreenControl: false,
+                    streetViewControl: true,
+                    zoomControl      : true,
+                    styles: [
+                        { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] }
+                    ]
+                });
+
+                // Pickup marker
+                const marker = new google.maps.Marker({
+                    position : pos,
+                    map      : map,
+                    title    : PICKUP_LABEL,
+                    animation: google.maps.Animation.DROP,
+                    icon     : {
+                        path        : google.maps.SymbolPath.CIRCLE,
+                        scale       : 12,
+                        fillColor   : '#e63946',
+                        fillOpacity : 1,
+                        strokeColor : '#ffffff',
+                        strokeWeight: 3,
+                    }
+                });
+
+                // Info popup on marker click
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div style="font-family:sans-serif;padding:4px 0;">
+                            <div style="font-weight:600;font-size:13px;margin-bottom:3px;">
+                                <?php echo h($car['make'].' '.$car['model']); ?>
+                            </div>
+                            <div style="font-size:12px;color:#555;">
+                                <i class="bi bi-geo-alt-fill"></i> ${PICKUP_LABEL}
+                            </div>
+                        </div>
+                    `
+                });
+
+                marker.addListener('click', () => infoWindow.open(map, marker));
+                // Open by default so user immediately sees the label
+                infoWindow.open(map, marker);
+            }
+            </script>
+            <script async defer
+                src="https://maps.googleapis.com/maps/api/js?key=<?php echo GMAPS_KEY; ?>&callback=initPickupMap">
+            </script>
+
+            <?php else: ?>
+            <!-- Fallback if no coords stored yet -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;text-align:center;">
+                <i class="bi bi-geo-alt" style="font-size:2rem;color:var(--text-muted);"></i>
+                <p class="text-muted-dn mt-2 mb-1" style="font-size:.88rem;">
+                    Pickup: <strong><?php echo h($car['location']); ?></strong>
+                </p>
+                <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($car['location'] . ', Singapore'); ?>"
+                   target="_blank" rel="noopener"
+                   class="btn btn-sm btn-outline-light mt-1" style="font-size:.8rem;">
+                    Search on Google Maps
+                </a>
+            </div>
+            <?php endif; ?>
+
         </div>
     </div>
 </div>
