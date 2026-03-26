@@ -7,31 +7,53 @@ require_once 'includes/auth.php';
 if (isLoggedIn()) { header("Location: " . BASE . "/my-bookings.php"); exit(); }
 
 $error = '';
+$errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email    = trim($_POST['email']    ?? '');
-    $password = $_POST['password'] ?? '';
+    $captcha_secret   = '6LdZc5gsAAAAANBuDosEPrR7f-o_rLt_IB-jGiZv';
+    $captcha_response = $_POST['g-recaptcha-response'] ?? '';
+    $captcha_passed = false;
 
-    if (empty($email) || empty($password)) {
-        $error = 'Please enter your email and password.';
+    if (empty($captcha_response)) {
+        $errors['captcha'] = 'Please complete the CAPTCHA verification.';
     } else {
-        $stmt = $conn->prepare("SELECT member_id, full_name, password FROM members WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $stmt->store_result();
-        $stmt->bind_result($member_id, $full_name, $hashed);
-
-        if ($stmt->fetch() && password_verify($password, $hashed)) {
-            $_SESSION['member_id']  = $member_id;
-            $_SESSION['full_name']  = $full_name;
-            $_SESSION['email']      = $email;
-            session_regenerate_id(true); // Prevent session fixation
-            header("Location: " . BASE . "/my-bookings.php");
-            exit();
+        $verify = file_get_contents(
+            "https://www.google.com/recaptcha/api/siteverify?secret=" .
+            urlencode($captcha_secret) . "&response=" . urlencode($captcha_response)
+        );
+        $captcha_result = json_decode($verify, true);
+        if ($captcha_result['success']) {
+            $captcha_passed = true;
         } else {
-            $error = 'Invalid email or password.';
+            $errors['captcha'] = 'CAPTCHA verification failed. Please try again.';
         }
-        $stmt->close();
+    }
+
+    if ($captcha_passed) {
+        $email    = trim($_POST['email']    ?? '');
+        $password = $_POST['password'] ?? '';
+
+        if (empty($email) || empty($password)) {
+            $error = 'Please enter your email and password.';
+        } else {
+            $stmt = $conn->prepare("SELECT member_id, full_name, password FROM members WHERE email = ?");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $stmt->store_result();
+            $stmt->bind_result($member_id, $full_name, $hashed);
+
+            if ($stmt->fetch() && password_verify($password, $hashed)) {
+                $_SESSION['member_id']  = $member_id;
+                $_SESSION['full_name']  = $full_name;
+                $_SESSION['email']      = $email;
+                session_regenerate_id(true); // Prevent session fixation
+                header("Location: " . BASE . "/my-bookings.php");
+                exit();
+            } else {
+                $error = 'Invalid email or password.';
+            }
+            $stmt->close();
+        }
     }
 }
 
@@ -51,7 +73,7 @@ require_once 'includes/header.php';
             <div class="alert-error mb-4"><i class="bi bi-exclamation-triangle me-2"></i><?php echo h($error); ?></div>
         <?php endif; ?>
 
-        <form method="POST" action="<?php echo BASE; ?>/login.php" onsubmit="return validateLoginForm();" novalidate>
+        <form method="POST" action="<?php echo BASE; ?>/login.php" onsubmit="return validateLoginFormFull();" novalidate>
             <div class="mb-3">
                 <label class="form-label" for="email">Email Address</label>
                 <input type="email" class="form-control" id="email" name="email"
@@ -65,6 +87,10 @@ require_once 'includes/header.php';
                     placeholder="Your password" required>
             </div>
 
+            <div class="mb-4">
+                <div class="g-recaptcha" data-sitekey="6LdZc5gsAAAAAELSc101oVrd2ZB74yVahYxjIAwk" data-theme="dark"></div>
+            </div>
+
             <button type="submit" class="btn btn-accent w-100 py-2">
                 <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
             </button>
@@ -76,5 +102,27 @@ require_once 'includes/header.php';
         </p>
     </div>
 </div>
+
+<script>
+function validateLoginFormFull() {
+    // Step 1: Validate fields first
+    if (!validateLoginForm()) {
+        return false;
+    }
+
+    // Step 2: Fields are valid — now check CAPTCHA
+    document.querySelectorAll('.captcha-client-error').forEach(e => e.remove());
+    if (!grecaptcha.getResponse()) {
+        const captchaDiv = document.querySelector('.g-recaptcha');
+        const err = document.createElement('div');
+        err.className = 'form-error captcha-client-error';
+        err.textContent = 'Please complete the CAPTCHA verification.';
+        captchaDiv.parentNode.insertBefore(err, captchaDiv.nextSibling);
+        return false;
+    }
+
+    return true;
+}
+</script>
 
 <?php require_once 'includes/footer.php'; ?>
