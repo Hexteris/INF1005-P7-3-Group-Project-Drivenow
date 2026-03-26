@@ -108,3 +108,33 @@ function loadMailConfig(): array
     error_log("SMTP: db-config.ini not found in any expected path");
     return [];
 }
+
+function sendPaymentConfirmationEmail(string $toEmail, string $toName,
+                                       array $booking, string $cardType,
+                                       string $card_last4): bool
+{
+    $car      = $booking['make'] . ' ' . $booking['model'];
+    $plate    = $booking['plate_no'];
+    $start    = date('d M Y, h:i A', strtotime($booking['start_time']));
+    $end      = date('d M Y, h:i A', strtotime($booking['end_time']));
+    $amount   = number_format($booking['total_cost'], 2);
+
+    $subject = "Payment Confirmed - DriveNow Booking";
+    $body    = "Hi {$toName},\r\n\r\n"
+             . "Your payment has been confirmed! Here are your booking details:\r\n\r\n"
+             . "Car       : {$car} ({$plate})\r\n"
+             . "From      : {$start}\r\n"
+             . "To        : {$end}\r\n"
+             . "Amount    : \${$amount}\r\n"
+             . "Paid with : {$cardType} ending in {$card_last4}\r\n\r\n"
+             . "Thank you for choosing DriveNow!\r\n\r\n"
+             . "DriveNow Team";
+
+    $cfg  = loadMailConfig();
+    $host = $cfg['smtp_host'] ?? 'smtp.gmail.com';
+    $port = (int)($cfg['smtp_port'] ?? 587);
+    $user = $cfg['smtp_user'] ?? '';
+    $pass = $cfg['smtp_pass'] ?? '';
+
+    return sendViaSmtp($host, $port, $user, $pass, $user, $toEmail, $toName, $subject, $body);
+}

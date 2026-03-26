@@ -5,6 +5,7 @@ require_once 'includes/config.php';
 require_once 'includes/auth.php';
 requireLogin();
 require_once 'includes/db-connect.php';
+require_once 'includes/mailer.php';
 
 $booking_id = (int)($_GET['booking_id'] ?? 0);
 $member_id  = $_SESSION['member_id'];
@@ -93,6 +94,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $upd->execute();
             $upd->close();
             $success = true;
+            $mem = $conn->prepare("SELECT full_name, email FROM members WHERE member_id = ?");
+            $mem->bind_param("i", $member_id);
+            $mem->execute();
+            $member = $mem->get_result()->fetch_assoc();
+            $mem->close();
+            sendPaymentConfirmationEmail($member['email'], $member['full_name'], $booking, $card_type, $card_last4);
         } else {
             $error = 'Payment processing failed. Please try again.';
         }
