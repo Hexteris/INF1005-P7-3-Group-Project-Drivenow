@@ -7,6 +7,12 @@ requireLogin();
 require_once 'includes/db-connect.php';
 require_once 'includes/mailer.php';
 
+// ── Loyalty points config ────────────────────────────────────
+define('POINTS_PER_DOLLAR',   1);
+define('POINTS_REDEEM_UNIT',  100);
+define('POINTS_REDEEM_VALUE', 5.00);
+define('POINTS_MIN_REDEEM',   100);
+
 $booking_id = (int)($_GET['booking_id'] ?? 0);
 $member_id  = $_SESSION['member_id'];
 $error      = '';
@@ -40,6 +46,23 @@ if ($chk->num_rows > 0) {
 }
 $chk->close();
 
+// Fetch member's current points
+$mStmt = $conn->prepare("SELECT points FROM members WHERE member_id = ?");
+$mStmt->bind_param("i", $member_id);
+$mStmt->execute();
+$mRow = $mStmt->get_result()->fetch_assoc();
+$mStmt->close();
+$currentPoints      = (int)($mRow['points'] ?? 0);
+$maxRedeemableUnits = floor($currentPoints / POINTS_REDEEM_UNIT);
+$maxPointsDiscount  = min($maxRedeemableUnits * POINTS_REDEEM_VALUE, $booking['total_cost']);
+$maxRedeemableUnits = (int)ceil($maxPointsDiscount / POINTS_REDEEM_VALUE);
+
+// Points trackers
+$pointsEarned    = 0;
+$pointsRedeemed  = 0;
+$discountApplied = 0.00;
+$finalAmount     = 0.00;
+
 // Detect card type from number
 function detectCardType($number) {
     $number = preg_replace('/\D/', '', $number);
@@ -55,6 +78,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $card_number = preg_replace('/\D/', '', $_POST['card_number'] ?? '');
     $card_expiry = trim($_POST['card_expiry'] ?? '');
     $card_cvv    = trim($_POST['card_cvv']    ?? '');
+    $use_points_units = isset($_POST['use_points']) ? (int)($_POST['use_points_units'] ?? 0) : 0;
+    $use_points_units = max(0, min($use_points_units, $maxRedeemableUnits));
+    $discountApplied  = round($use_points_units * POINTS_REDEEM_VALUE, 2);
+    $pointsRedeemed   = $use_points_units * POINTS_REDEEM_UNIT;
+    $finalAmount      = max(0, round($booking['total_cost'] - $discountApplied, 2));
 
     // Validate
     if (strlen($card_name) < 2) {
@@ -78,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($error)) {
         $card_last4 = substr($card_number, -4);
         $card_type  = detectCardType($card_number);
-        $amount     = $booking['total_cost'];
+        $amount     = $finalAmount;
 
         // Insert payment record
         $ins = $conn->prepare("
@@ -93,13 +121,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $upd->bind_param("i", $booking_id);
             $upd->execute();
             $upd->close();
-
+            
             // Mark referral as used if this booking had a discount
             $markUsed = $conn->prepare("UPDATE referral_records SET discount_used = TRUE WHERE booking_id = ? AND referred_user_id = ?");
             $markUsed->bind_param("ii", $booking_id, $member_id);
             $markUsed->execute();
             $markUsed->close();
-            
+
+            // ── Loyalty: deduct redeemed points ─────────────
+            if ($pointsRedeemed > 0) {
+                $deduct = $conn->prepare("UPDATE members SET points = points - ? WHERE member_id = ?");
+                $deduct->bind_param("ii", $pointsRedeemed, $member_id);
+                $deduct->execute(); $deduct->close();
+                $logR = $conn->prepare("INSERT INTO points_log (member_id, booking_id, points, type, description) VALUES (?, ?, ?, 'redeemed', ?)");
+                $neg  = -$pointsRedeemed;
+                $desc = "Redeemed for S\${$discountApplied} off booking #{$booking_id}";
+                $logR->bind_param("iiis", $member_id, $booking_id, $neg, $desc);
+                $logR->execute(); $logR->close();
+            }
+
+            // ── Loyalty: award earned points ─────────────────
+            $pointsEarned = (int)floor($finalAmount * POINTS_PER_DOLLAR);
+            if ($pointsEarned > 0) {
+                $award = $conn->prepare("UPDATE members SET points = points + ? WHERE member_id = ?");
+                $award->bind_param("ii", $pointsEarned, $member_id);
+                $award->execute(); $award->close();
+                $logE = $conn->prepare("INSERT INTO points_log (member_id, booking_id, points, type, description) VALUES (?, ?, ?, 'earned', ?)");
+                $desc2 = "Earned for booking #{$booking_id} (S\${$finalAmount} paid)";
+                $logE->bind_param("iiis", $member_id, $booking_id, $pointsEarned, $desc2);
+                $logE->execute(); $logE->close();
+            }
+
             $success = true;
             $mem = $conn->prepare("SELECT full_name, email FROM members WHERE member_id = ?");
             $mem->bind_param("i", $member_id);
@@ -134,6 +186,32 @@ require_once 'includes/header.php';
         <h2 style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;margin-bottom:0.5rem;">Payment Successful!</h2>
         <p class="text-muted-dn mb-4">Your booking has been confirmed. You're all set to drive!</p>
 
+        <?php if ($pointsEarned > 0 || $pointsRedeemed > 0): ?>
+        <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);border-radius:var(--radius);padding:1.2rem 1.5rem;margin-bottom:1.5rem;text-align:left;">
+            <div style="font-size:.75rem;color:#aaa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.6rem;">
+                <i class="bi bi-star-fill me-1" style="color:#f5d77e;"></i>Loyalty Points Update
+            </div>
+            <?php if ($pointsRedeemed > 0): ?>
+            <div class="d-flex justify-content-between mb-1">
+                <span style="font-size:.88rem;color:#ccc;">Points redeemed</span>
+                <span style="font-size:.88rem;color:#f94144;">−<?php echo $pointsRedeemed; ?> pts</span>
+            </div>
+            <?php endif; ?>
+            <?php if ($pointsEarned > 0): ?>
+            <div class="d-flex justify-content-between mb-1">
+                <span style="font-size:.88rem;color:#ccc;">Points earned</span>
+                <span style="font-size:.88rem;color:#34a853;">+<?php echo $pointsEarned; ?> pts</span>
+            </div>
+            <?php endif; ?>
+            <div class="d-flex justify-content-between mt-2 pt-2" style="border-top:1px solid rgba(255,255,255,0.1);">
+                <span style="font-size:.88rem;color:#fff;font-weight:600;">New balance</span>
+                <span style="font-size:.88rem;color:#f5d77e;font-weight:600;">
+                    <?php echo $currentPoints - $pointsRedeemed + $pointsEarned; ?> pts
+                </span>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:2rem;text-align:left;">
             <div class="d-flex justify-content-between mb-2">
                 <span class="text-muted-dn">Car</span>
@@ -151,16 +229,27 @@ require_once 'includes/header.php';
                 <span class="text-muted-dn">Return</span>
                 <span><?php echo date('d M Y, H:i', strtotime($booking['end_time'])); ?></span>
             </div>
+            <?php if ($discountApplied > 0): ?>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted-dn">Points discount</span>
+                <span style="color:#34a853;">−S$ <?php echo number_format($discountApplied, 2); ?></span>
+            </div>
+            <?php endif; ?>
             <hr style="border-color:var(--border);">
             <div class="d-flex justify-content-between">
                 <span style="font-weight:600;">Amount Paid</span>
-                <span style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--accent);">S$ <?php echo number_format($booking['total_cost'], 2); ?></span>
+                <span style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--accent);">S$ <?php echo number_format($finalAmount > 0 ? $finalAmount : $booking['total_cost'], 2); ?></span>
             </div>
         </div>
 
-        <a href="<?php echo BASE; ?>/my-bookings.php" class="btn btn-accent w-100 py-2">
-            <i class="bi bi-calendar-check me-2"></i>View My Bookings
-        </a>
+        <div class="d-flex gap-2">
+            <a href="<?php echo BASE; ?>/my-bookings.php" class="btn btn-accent w-100 py-2">
+                <i class="bi bi-calendar-check me-2"></i>View My Bookings
+            </a>
+            <a href="<?php echo BASE; ?>/my-points.php" class="btn btn-outline-light py-2" style="white-space:nowrap;">
+                <i class="bi bi-star me-1"></i>My Points
+            </a>
+        </div>
     </div>
 
     <?php else: ?>
@@ -174,6 +263,41 @@ require_once 'includes/header.php';
                     <div class="alert-error mb-4"><i class="bi bi-exclamation-triangle me-2"></i><?php echo h($error); ?></div>
                 <?php endif; ?>
 
+                <!-- Points redemption panel -->
+                <?php if ($currentPoints >= POINTS_MIN_REDEEM): ?>
+                <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);border-radius:var(--radius-sm);padding:1.2rem;margin-bottom:1.5rem;">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span style="font-size:.88rem;font-weight:600;color:#f5d77e;">
+                            <i class="bi bi-star-fill me-1"></i>Use Loyalty Points
+                        </span>
+                        <span style="font-size:.8rem;color:#aaa;">Balance: <?php echo number_format($currentPoints); ?> pts</span>
+                    </div>
+                    <p style="font-size:.78rem;color:#aaa;margin-bottom:.8rem;">Every 100 pts = S$5 off. Max discount: S$<?php echo number_format($maxPointsDiscount, 2); ?></p>
+                    <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+                        <input type="checkbox" id="usePointsCheck" onchange="togglePoints()" style="width:16px;height:16px;accent-color:#e63946;">
+                        <span style="font-size:.85rem;color:#ccc;">Apply points discount</span>
+                    </label>
+                    <div id="pointsSliderWrap" style="display:none;margin-top:.8rem;">
+                        <div class="d-flex justify-content-between" style="font-size:.78rem;color:#aaa;margin-bottom:4px;">
+                            <span>Units (1 unit = 100 pts = S$5)</span>
+                            <span id="unitsLabel">0</span>
+                        </div>
+                        <input type="range" id="pointsSlider" min="0" max="<?php echo $maxRedeemableUnits; ?>" value="0" step="1" style="width:100%;" oninput="updatePointsDiscount()">
+                        <div class="d-flex justify-content-between mt-1" style="font-size:.8rem;">
+                            <span style="color:#aaa;">Discount: <span id="discountDisplay" style="color:#34a853;">S$0.00</span></span>
+                            <span style="color:#aaa;">You pay: <span id="finalDisplay" style="color:#f5d77e;font-weight:600;">S$<?php echo number_format($booking['total_cost'], 2); ?></span></span>
+                        </div>
+                    </div>
+                </div>
+                <?php else: ?>
+                <div style="background:var(--bg-raised);border-radius:var(--radius-sm);padding:.8rem 1rem;margin-bottom:1.5rem;font-size:.82rem;color:var(--text-muted);">
+                    <i class="bi bi-star me-1" style="color:#f5d77e;"></i>
+                    You have <strong><?php echo $currentPoints; ?> pts</strong> — earn <?php echo POINTS_PER_DOLLAR; ?> pt per S$1 spent.
+                    Need <?php echo POINTS_MIN_REDEEM; ?> pts to redeem.
+                    <a href="<?php echo BASE; ?>/my-points.php" style="color:#e63946;">View points →</a>
+                </div>
+                <?php endif; ?>
+
                 <!-- Accepted Cards -->
                 <div class="d-flex align-items-center gap-2 mb-4">
                     <span class="text-muted-dn" style="font-size:.82rem;">Accepted:</span>
@@ -183,6 +307,8 @@ require_once 'includes/header.php';
                 </div>
 
                 <form method="POST" id="paymentForm" novalidate>
+                    <input type="hidden" name="use_points" id="usePointsHidden" value="">
+                    <input type="hidden" name="use_points_units" id="usePointsUnits" value="0">
 
                     <!-- Card Preview -->
                     <div class="credit-card-preview mb-4" id="cardPreview">
@@ -246,7 +372,7 @@ require_once 'includes/header.php';
                     </div>
 
                     <button type="submit" class="btn btn-accent w-100 py-2" id="payBtn" style="font-size:1rem;">
-                        <i class="bi bi-lock-fill me-2"></i>Pay S$ <?php echo number_format($booking['total_cost'], 2); ?>
+                        <i class="bi bi-lock-fill me-2"></i>Pay S$ <span id="payBtnAmount"><?php echo number_format($booking['total_cost'], 2); ?></span>
                     </button>
 
                     <p class="text-center text-muted-dn mt-3" style="font-size:.78rem;">
@@ -415,6 +541,29 @@ require_once 'includes/header.php';
 </style>
 
 <script>
+const BOOKING_TOTAL    = <?php echo (float)$booking['total_cost']; ?>;
+const POINTS_PER_UNIT  = <?php echo POINTS_REDEEM_UNIT; ?>;
+const DOLLARS_PER_UNIT = <?php echo POINTS_REDEEM_VALUE; ?>;
+const PTS_PER_DOLLAR   = <?php echo POINTS_PER_DOLLAR; ?>;
+
+function togglePoints() {
+    const checked = document.getElementById('usePointsCheck').checked;
+    document.getElementById('pointsSliderWrap').style.display = checked ? 'block' : 'none';
+    document.getElementById('usePointsHidden').value = checked ? '1' : '';
+    if (!checked) { document.getElementById('pointsSlider').value = 0; updatePointsDiscount(); }
+}
+
+function updatePointsDiscount() {
+    const units    = parseInt(document.getElementById('pointsSlider').value);
+    const discount = Math.min(units * DOLLARS_PER_UNIT, BOOKING_TOTAL);
+    const final_   = Math.max(0, BOOKING_TOTAL - discount);
+    document.getElementById('unitsLabel').textContent    = units + ' unit' + (units!==1?'s':'') + ' (' + (units*POINTS_PER_UNIT) + ' pts)';
+    document.getElementById('discountDisplay').textContent = 'S$' + discount.toFixed(2);
+    document.getElementById('finalDisplay').textContent  = 'S$' + final_.toFixed(2);
+    document.getElementById('payBtnAmount').textContent  = final_.toFixed(2);
+    document.getElementById('usePointsUnits').value      = units;
+}
+
 // Format card number with spaces
 document.getElementById('card_number').addEventListener('input', function(e) {
     let v = e.target.value.replace(/\D/g, '').substring(0, 16);
