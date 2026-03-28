@@ -8,6 +8,14 @@ require_once 'includes/db-connect.php';
 $member_id = $_SESSION['member_id'];
 $message   = '';
 
+// Fetch member points for banner
+$pStmt = $conn->prepare("SELECT points FROM members WHERE member_id = ?");
+$pStmt->bind_param("i", $member_id);
+$pStmt->execute();
+$pRow = $pStmt->get_result()->fetch_assoc();
+$pStmt->close();
+$memberPoints = (int)($pRow['points'] ?? 0);
+
 // Cancel booking
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_id'])) {
     $cancel_id = (int)$_POST['cancel_id'];
@@ -72,6 +80,36 @@ require_once 'includes/header.php';
 </section>
 
 <div class="container pb-5">
+
+    <!-- Loyalty points banner -->
+    <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);border-radius:var(--radius);padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+        <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-star-fill" style="color:#f5d77e;font-size:1.4rem;"></i>
+            <div>
+                <div style="font-size:.75rem;color:#aaa;text-transform:uppercase;letter-spacing:.08em;">Loyalty Points</div>
+                <div style="font-size:1.1rem;font-weight:600;color:#f5d77e;">
+                    <?php echo number_format($memberPoints); ?> pts
+                    <span style="font-size:.78rem;color:#aaa;font-weight:400;margin-left:.4rem;">
+                        <?php
+                            if ($memberPoints >= 1500)    echo '🥇 Gold Member';
+                            elseif ($memberPoints >= 500) echo '🥈 Silver Member';
+                            else                          echo '🥉 Bronze Member';
+                        ?>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2" style="font-size:.82rem;color:#aaa;">
+            <?php if ($memberPoints >= 100): ?>
+                <span style="color:#34a853;"><i class="bi bi-check-circle-fill me-1"></i>Enough to redeem on next booking</span>
+            <?php else: ?>
+                <span><?php echo 100 - $memberPoints; ?> pts until first redemption</span>
+            <?php endif; ?>
+            <a href="<?php echo BASE; ?>/my-points.php" class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:#f5d77e;border:1px solid rgba(245,215,126,0.3);font-size:.78rem;">
+                View History →
+            </a>
+        </div>
+    </div>
     <?php if ($msgType === 'success'): ?>
         <div class="alert-success mb-4"><i class="bi bi-check-circle me-2"></i><?php echo h($msgText); ?></div>
     <?php elseif ($msgType === 'error'): ?>
