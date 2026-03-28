@@ -141,13 +141,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     INSERT INTO referral_records (referrer_user_id, referred_user_id, booking_id, discount_used)
                                     VALUES (?, ?, ?, FALSE)
                                 ");
-                                $stmt2->bind_param("iii", $referrer_id, $mid, $new_booking_id);
+                                $stmt2->bind_param("iii", $referrer_id, $mid, $bid);
                                 $stmt2->execute();
                                 $stmt2->close();
                             }
                         
                         // Redirect to payment page
-                        header("Location: " . BASE . "/payment.php?booking_id=" . $new_booking_id);
+                        header("Location: " . BASE . "/payment.php?booking_id=" . $bid);
                         exit();
                     } else {
                         $error = 'Booking failed. Please try again.';
