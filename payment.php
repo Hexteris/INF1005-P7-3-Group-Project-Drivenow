@@ -93,6 +93,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $upd->bind_param("i", $booking_id);
             $upd->execute();
             $upd->close();
+
+            // Mark referral as used if this booking had a discount
+            $markUsed = $conn->prepare("UPDATE referral_records SET discount_used = TRUE WHERE booking_id = ? AND referred_user_id = ?");
+            $markUsed->bind_param("ii", $booking_id, $member_id);
+            $markUsed->execute();
+            $markUsed->close();
+            
             $success = true;
             $mem = $conn->prepare("SELECT full_name, email FROM members WHERE member_id = ?");
             $mem->bind_param("i", $member_id);

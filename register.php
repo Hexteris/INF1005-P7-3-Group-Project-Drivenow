@@ -5,6 +5,40 @@ require_once 'includes/db-connect.php';
 require_once 'includes/auth.php';
 require_once 'includes/mailer.php';
 
+// Generate unique referral code
+function generateReferralCode($conn, $full_name) {
+    // Get first 3 letters of name (uppercase, letters only)
+    $nameClean = preg_replace('/[^A-Za-z]/', '', $full_name);
+    $namePrefix = strtoupper(substr($nameClean, 0, 3));
+    
+    // Pad with X if name is too short
+    $namePrefix = str_pad($namePrefix, 3, 'X');
+    
+    // Generate unique code
+    $maxAttempts = 10;
+    for ($i = 0; $i < $maxAttempts; $i++) {
+        // 3 random digits + 1 random letter
+        $randomDigits = rand(100, 999);
+        $randomLetter = chr(rand(65, 90)); // A-Z
+        $code = $namePrefix . $randomDigits . $randomLetter;
+        
+        // Check if code already exists
+        $check = $conn->prepare("SELECT member_id FROM members WHERE referral_code = ?");
+        $check->bind_param("s", $code);
+        $check->execute();
+        $check->store_result();
+        
+        if ($check->num_rows === 0) {
+            $check->close();
+            return $code; // Unique code found
+        }
+        $check->close();
+    }
+    
+    // Fallback: use 4 random digits instead of 3
+    return $namePrefix . rand(1000, 9999) . chr(rand(65, 90));
+}
+
 // Redirect if already logged in
 if (isLoggedIn()) { header("Location: " . BASE . "/my-bookings.php"); exit(); }
 
@@ -60,10 +94,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $stmt->close();
                 $hashed = password_hash($password, PASSWORD_DEFAULT);
+                $referral_code = generateReferralCode($conn, $full_name);
                 $stmt = $conn->prepare(
-                    "INSERT INTO members (full_name, email, password, phone, licence_no) VALUES (?, ?, ?, ?, ?)"
+                    "INSERT INTO members (full_name, email, password, phone, licence_no, referral_code) VALUES (?, ?, ?, ?, ?, ?)"
                 );
-                $stmt->bind_param("sssss", $full_name, $email, $hashed, $phone, $licence_no);
+                $stmt->bind_param("ssssss", $full_name, $email, $hashed, $phone, $licence_no, $referral_code);
 
                 if ($stmt->execute()) {
                     // Send simple welcome email

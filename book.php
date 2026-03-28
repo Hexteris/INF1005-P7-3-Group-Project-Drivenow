@@ -27,8 +27,13 @@ if (!$car) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $start_time = $_POST['start_time'] ?? '';
-    $end_time   = $_POST['end_time']   ?? '';
+    $end_time   = $_POST['end_time']  ?? '';
     $total_cost = (float)($_POST['total_cost'] ?? 0);
+    $referral_code = trim($_POST['referral_code'] ?? '');
+
+    $mid  = $_SESSION['member_id'];
+    $discount_applied = false;
+    $referrer_id = null;
 
     if (empty($start_time) || empty($end_time)) {
         $error = 'Please select both start and end times.';
@@ -59,8 +64,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'This car is already booked for the selected time slot. Please choose different times.';
                 } else {
                     $cost = round($hours * $car['price_per_hr'], 2);
-                    $mid  = $_SESSION['member_id'];
 
+                    // Validate referral code if provided
+                    if (!empty($referral_code)) {
+                        // First, check if user has already used ANY discount code before
+                        $usedChk = $conn->prepare("SELECT discount_used FROM referral_records WHERE referred_user_id = ? AND discount_used = TRUE");
+                        $usedChk->bind_param("i", $mid);
+                        $usedChk->execute();
+                        $usedChk->store_result();
+                        $hasUsedDiscount = $usedChk->num_rows > 0;
+                        $usedChk->close();
+
+                        if ($hasUsedDiscount) {
+                            $error = 'You have already used a referral code for a previous booking.';
+                        } else {
+                            // Check if the code is valid
+                            $refChk = $conn->prepare("SELECT member_id FROM members WHERE referral_code = ?");
+                            $refChk->bind_param("s", $referral_code);
+                            $refChk->execute();
+                            $result = $refChk->get_result()->fetch_assoc();
+                            $refChk->close();
+
+                            if ($result && $result['member_id'] != $mid) {
+                                $referrer_id = $result['member_id'];
+                                $discountPercent = 15;
+                                $discountMultiplier = 1 - ($discountPercent / 100);
+                                $cost = round($cost * $discountMultiplier, 2);
+                                $discount_applied = true;
+                            } elseif ($result && $result['member_id'] == $mid) {
+                                $error = 'You cannot use your own referral code.';
+                            } else {
+                                $error = 'Invalid referral code.';
+                            }
+                        }
+                    }
+                    
+                    if (!$error)
                     $ins = $conn->prepare("
                         INSERT INTO bookings (member_id, car_id, start_time, end_time, total_cost, status)
                         VALUES (?, ?, ?, ?, ?, 'pending')
@@ -69,6 +108,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($ins->execute()) {
                         $new_booking_id = $ins->insert_id;
                         $ins->close();
+
+                        // Insert referral usage if discount applied
+                            if ($discount_applied && $referrer_id) {
+                                $stmt2 = $conn->prepare("
+                                    INSERT INTO referral_records (referrer_user_id, referred_user_id, booking_id, discount_used)
+                                    VALUES (?, ?, ?, FALSE)
+                                ");
+                                $stmt2->bind_param("iii", $referrer_id, $mid, $new_booking_id);
+                                $stmt2->execute();
+                                $stmt2->close();
+                            }
+                        
+                        // Redirect to payment page
                         header("Location: " . BASE . "/payment.php?booking_id=" . $new_booking_id);
                         exit();
                     } else {
@@ -118,8 +170,7 @@ require_once 'includes/header.php';
         <div class="col-lg-7">
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;">
                 <h4 style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;margin-bottom:1.5rem;">Select Date &amp; Time</h4>
-                <form method="POST" action="<?php echo BASE; ?>/book.php?car_id=<?php echo (int)$car_id; ?>"
-                      onsubmit="return validateBookingForm();" novalidate>
+                <form method="POST" action="<?php echo BASE; ?>/book.php?car_id=<?php echo (int)$car_id; ?>" novalidate>
                     <input type="hidden" id="total_cost" name="total_cost" value="0">
                     <input type="hidden" id="price_per_hr" value="<?php echo (float)$car['price_per_hr']; ?>">
 
@@ -137,12 +188,26 @@ require_once 'includes/header.php';
                             min="<?php echo date('Y-m-d\TH:i'); ?>" required>
                     </div>
 
+                    <div class="mb-4">
+                        <label class="form-label" for="referral_code" style="color:var(--text-muted);font-size:.85rem;">
+                            Referral/Discount Code (Optional)
+                        </label>
+                        <input type="text" class="form-control" id="referral_code" name="referral_code"
+                            style="background:var(--bg-raised);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:.7rem 1rem;"
+                            placeholder="Enter code for discount">
+                        <small id="discount_feedback" style="font-size:.78rem;margin-top:.3rem;display:block;"></small>
+                    </div>
+
                     <div style="background:var(--bg-raised);border-radius:var(--radius-sm);padding:1.2rem;margin-bottom:1.5rem;">
                         <div class="price-breakdown d-flex justify-content-between mb-2">
                             <span>Duration</span><span id="hours_output">–</span>
                         </div>
                         <div class="price-breakdown d-flex justify-content-between mb-2">
                             <span>Rate</span><span>S$ <?php echo number_format($car['price_per_hr'], 2); ?>/hr</span>
+                        </div>
+                        <div class="price-breakdown d-flex justify-content-between mb-2" id="discount_row" style="display:none !important;">
+                            <span style="color:var(--accent);">Discount</span>
+                            <span style="color:var(--accent);" id="discount_amount">- S$ 0.00</span>
                         </div>
                         <hr style="border-color:var(--border);margin:.8rem 0;">
                         <div class="d-flex justify-content-between align-items-center">
@@ -289,9 +354,112 @@ require_once 'includes/header.php';
                 </a>
             </div>
             <?php endif; ?>
-
         </div>
     </div>
 </div>
+
+<script>
+// Calculate price based on duration
+function calculatePrice() {
+    const start = document.getElementById('start_time').value;
+    const end = document.getElementById('end_time').value;
+    const pricePerHr = parseFloat(document.getElementById('price_per_hr').value);
+
+    if (start && end) {
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        const hours = (endDate - startDate) / (1000 * 60 * 60);
+
+        if (hours > 0) {
+            document.getElementById('hours_output').textContent = hours.toFixed(1) + ' hrs';
+            document.getElementById('hours_output').dataset.hours = hours;
+            
+            // Calculate discount if a code has been entered
+            const code = document.getElementById('referral_code').value.trim();
+            if (code) {
+                applyReferralDiscount();
+            } else {
+                // Show base price without discount
+                const baseCost = hours * pricePerHr;
+                document.getElementById('price_output').textContent = `S$ ${baseCost.toFixed(2)}`;
+                document.getElementById('total_cost').value = baseCost.toFixed(2);
+            }
+        } else {
+            document.getElementById('hours_output').textContent = '–';
+            document.getElementById('price_output').textContent = 'S$ 0.00';
+            document.getElementById('total_cost').value = '0';
+        }
+    }
+}
+
+// Validate and apply referral discount
+function applyReferralDiscount() {
+    const code = document.getElementById('referral_code').value.trim();
+    const hours = parseFloat(document.getElementById('hours_output').dataset.hours || 0);
+    const pricePerHr = parseFloat(document.getElementById('price_per_hr').value);
+    const feedbackEl = document.getElementById('discount_feedback');
+    const discountRow = document.getElementById('discount_row');
+
+    if (!hours || !pricePerHr) {
+        // Can't calculate yet, just show base price
+        return;
+    }
+
+    const baseCost = hours * pricePerHr;
+
+    if (!code) {
+        // No code entered, show base price
+        document.getElementById('price_output').textContent = `S$ ${baseCost.toFixed(2)}`;
+        document.getElementById('total_cost').value = baseCost.toFixed(2);
+        feedbackEl.textContent = '';
+        feedbackEl.style.color = '';
+        discountRow.style.display = 'none';
+        return;
+    }
+
+    // Validate code via AJAX
+    fetch('<?php echo BASE; ?>/validate_discount.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({
+            action: 'validate_discount',
+            referral_code: code,
+            hours: hours,
+            price_per_hr: pricePerHr
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('price_output').textContent = `S$ ${data.discountedCost.toFixed(2)}`;
+        document.getElementById('total_cost').value = data.discountedCost.toFixed(2);
+        
+        if (data.valid) {
+            feedbackEl.textContent = '✓ ' + data.message;
+            feedbackEl.style.color = '#34a853';
+            discountRow.style.display = 'flex';
+            const discountAmount = baseCost - data.discountedCost;
+            document.getElementById('discount_amount').textContent = `- S$ ${discountAmount.toFixed(2)}`;
+        } else {
+            feedbackEl.textContent = data.message;
+            feedbackEl.style.color = '#f94144';
+            discountRow.style.display = 'none';
+        }
+    })
+    .catch(err => {
+        console.error('Discount validation error:', err);
+    });
+}
+
+// Event listeners
+document.getElementById('start_time').addEventListener('change', calculatePrice);
+document.getElementById('end_time').addEventListener('change', calculatePrice);
+document.getElementById('referral_code').addEventListener('blur', applyReferralDiscount);
+document.getElementById('referral_code').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        applyReferralDiscount();
+    }
+});
+</script>
 
 <?php require_once 'includes/footer.php'; ?>

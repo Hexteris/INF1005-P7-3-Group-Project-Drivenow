@@ -8,6 +8,15 @@ require_once 'includes/db-connect.php';
 $member_id = $_SESSION['member_id'];
 $message   = '';
 
+// Fetch user's own referral code
+$refCodeStmt = $conn->prepare("SELECT referral_code FROM members WHERE member_id = ?");
+$refCodeStmt->bind_param("i", $member_id);
+$refCodeStmt->execute();
+$refCodeResult = $refCodeStmt->get_result();
+$refCodeRow = $refCodeResult->fetch_assoc();
+$myReferralCode = $refCodeRow ? $refCodeRow['referral_code'] : '';
+$refCodeStmt->close();
+
 // Cancel booking
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_id'])) {
     $cancel_id = (int)$_POST['cancel_id'];
@@ -77,6 +86,44 @@ require_once 'includes/header.php';
     <?php elseif ($msgType === 'error'): ?>
         <div class="alert-error mb-4"><i class="bi bi-exclamation-triangle me-2"></i><?php echo h($msgText); ?></div>
     <?php endif; ?>
+
+    <div class="mb-4 p-3" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);">
+        <h5>Your Referral Code</h5>
+        <div class="d-flex align-items-center gap-2">
+            <span id="referralCode" style="font-weight:600;font-size:1.2rem;">
+                <?php echo h($myReferralCode); ?>
+            </span>
+            <?php if (!empty($myReferralCode)): ?>
+            <button class="btn btn-outline-secondary btn-sm" id="copyBtn" onclick="copyReferralCode()" 
+                    style="padding:.1rem .3rem;">
+                <i class="bi bi-clipboard" id="copyIcon"></i>
+            </button>
+        <?php endif; ?>
+        </div>
+        <p class="text-muted-dn mb-0" style="font-size:.85rem;">
+            Share this code with friends. They get 15% off their first booking!
+        </p>
+    </div>
+
+    <script>
+        function copyReferralCode() {
+            const code = document.getElementById('referralCode').innerText;
+            const icon = document.getElementById('copyIcon');
+
+            navigator.clipboard.writeText(code).then(() => {
+                // Change to checkmark
+                icon.className = 'bi bi-check2';
+        
+                // Change back to clipboard after 2 seconds
+                setTimeout(() => {
+                    icon.className = 'bi bi-clipboard';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy code');
+            });
+        }
+    </script>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <p class="text-muted-dn mb-0"><?php echo count($bookings); ?> booking<?php echo count($bookings) !== 1 ? 's' : ''; ?> total</p>
