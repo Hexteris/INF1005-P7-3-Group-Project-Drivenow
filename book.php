@@ -407,7 +407,15 @@ function calculatePrice() {
 // Validate and apply referral discount
 function applyReferralDiscount() {
     const code = document.getElementById('referral_code').value.trim();
-    const hours = parseFloat(document.getElementById('hours_output').dataset.hours || 0);
+    const hoursEl = document.getElementById('hours_output');
+    // Try to get hours from dataset, otherwise parse from text content
+    let hours = parseFloat(hoursEl.dataset.hours || 0);
+    if (!hours && hoursEl.textContent) {
+        const match = hoursEl.textContent.match(/([\d.]+)\s*(hr|min)/);
+        if (match) {
+            hours = match[2] === 'min' ? parseFloat(match[1]) / 60 : parseFloat(match[1]);
+        }
+    }
     const pricePerHr = parseFloat(document.getElementById('price_per_hr').value);
     const feedbackEl = document.getElementById('discount_feedback');
     const discountRow = document.getElementById('discount_row');
