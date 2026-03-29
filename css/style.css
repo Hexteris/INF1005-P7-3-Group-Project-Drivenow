@@ -3,6 +3,7 @@
    Theme: Dark Premium Automotive
    ============================================= */
 
+
 :root {
     --bg-base:    #090909;
     --bg-surface: #111111;
@@ -20,8 +21,10 @@
     --transition: 0.25s ease;
 }
 
+
 /* ---- Base ---- */
 *, *::before, *::after { box-sizing: border-box; }
+
 
 body {
     background: var(--bg-base);
@@ -34,13 +37,16 @@ body {
     flex-direction: column;
 }
 
+
 h1,h2,h3,h4,h5,h6 {
     font-family: 'Bebas Neue', sans-serif;
     letter-spacing: 0.03em;
 }
 
+
 a { color: var(--accent); text-decoration: none; transition: opacity var(--transition); }
 a:hover { opacity: 0.8; }
+
 
 /* ---- Navbar ---- */
 .dn-navbar {
@@ -53,6 +59,7 @@ a:hover { opacity: 0.8; }
     z-index: 1000;
 }
 
+
 .dn-logo {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 1.7rem;
@@ -63,11 +70,14 @@ a:hover { opacity: 0.8; }
     gap: 0.4rem;
 }
 
+
 .logo-icon { color: var(--accent); font-size: 1.5rem; }
 .logo-accent { color: var(--accent); }
 
+
 .navbar-toggler { border-color: var(--border); }
 .navbar-toggler-icon { filter: invert(1); }
+
 
 .dn-navbar .nav-link {
     color: var(--text-muted) !important;
@@ -79,11 +89,13 @@ a:hover { opacity: 0.8; }
 }
 .dn-navbar .nav-link:hover { color: var(--text) !important; }
 
+
 .nav-user {
     color: var(--text-muted);
     font-size: 0.88rem;
     font-weight: 500;
 }
+
 
 /* ---- Buttons ---- */
 .btn-accent {
@@ -101,8 +113,10 @@ a:hover { opacity: 0.8; }
     box-shadow: 0 6px 20px rgba(230,57,70,0.35);
 }
 
+
 .btn-outline-light { border-color: var(--border); }
 .btn-outline-light:hover { background: var(--bg-raised); }
+
 
 /* ---- Hero Section ---- */
 .hero {
@@ -114,6 +128,7 @@ a:hover { opacity: 0.8; }
     background: var(--bg-base);
 }
 
+
 .hero-bg {
     position: absolute;
     inset: 0;
@@ -121,6 +136,7 @@ a:hover { opacity: 0.8; }
         radial-gradient(ellipse 70% 60% at 70% 60%, rgba(230,57,70,0.12) 0%, transparent 65%),
         radial-gradient(ellipse 40% 40% at 20% 20%, rgba(230,57,70,0.07) 0%, transparent 60%);
 }
+
 
 .hero-grid-overlay {
     position: absolute;
@@ -132,7 +148,9 @@ a:hover { opacity: 0.8; }
     mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
 }
 
+
 .hero-content { position: relative; z-index: 2; }
+
 
 .hero-eyebrow {
     display: inline-flex;
@@ -151,6 +169,7 @@ a:hover { opacity: 0.8; }
     animation: fadeUp 0.6s ease both;
 }
 
+
 .hero-title {
     font-family: 'Bebas Neue', sans-serif;
     font-size: clamp(3.5rem, 9vw, 7rem);
@@ -160,7 +179,9 @@ a:hover { opacity: 0.8; }
     animation: fadeUp 0.6s 0.1s ease both;
 }
 
+
 .hero-title .line-accent { color: var(--accent); }
+
 
 .hero-subtitle {
     color: var(--text-muted);
@@ -170,12 +191,14 @@ a:hover { opacity: 0.8; }
     animation: fadeUp 0.6s 0.2s ease both;
 }
 
+
 .hero-cta {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
     animation: fadeUp 0.6s 0.3s ease both;
 }
+
 
 .btn-hero-primary {
     background: var(--accent);
@@ -198,6 +221,7 @@ a:hover { opacity: 0.8; }
     box-shadow: 0 10px 30px rgba(230,57,70,0.4);
 }
 
+
 .btn-hero-secondary {
     background: var(--bg-card);
     color: var(--text);
@@ -218,12 +242,14 @@ a:hover { opacity: 0.8; }
     transform: translateY(-2px);
 }
 
+
 .hero-stats {
     display: flex;
     gap: 2.5rem;
     margin-top: 3rem;
     animation: fadeUp 0.6s 0.4s ease both;
 }
+
 
 .stat-val {
     font-family: 'Bebas Neue', sans-serif;
@@ -234,6 +260,7 @@ a:hover { opacity: 0.8; }
 .stat-val span { color: var(--accent); }
 .stat-label { color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; }
 
+
 .hero-car-visual {
     position: absolute;
     right: -5%;
@@ -243,6 +270,7 @@ a:hover { opacity: 0.8; }
     animation: fadeInRight 0.8s 0.2s ease both;
     filter: drop-shadow(0 0 80px rgba(230,57,70,0.2));
 }
+
 
 /* ---- Section Styles ---- */
 .section-eyebrow {
@@ -255,12 +283,14 @@ a:hover { opacity: 0.8; }
     margin-bottom: 0.6rem;
 }
 
+
 .section-title {
     font-family: 'Bebas Neue', sans-serif;
     font-size: clamp(2rem, 5vw, 3.2rem);
     letter-spacing: 0.03em;
     margin-bottom: 0.5rem;
 }
+
 
 /* ---- Car Cards ---- */
 .car-card {
@@ -270,7 +300,9 @@ a:hover { opacity: 0.8; }
     overflow: hidden;
     transition: all var(--transition);
     height: 100%;
+    position: relative;
 }
+
 
 .car-card:hover {
     border-color: var(--border-acc);
@@ -278,21 +310,43 @@ a:hover { opacity: 0.8; }
     box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 30px rgba(230,57,70,0.08);
 }
 
+
+/* ---- Car Card Image ---- */
 .car-card-img {
     width: 100%;
     height: 200px;
-    object-fit: cover;
+    overflow: hidden;
+    border-radius: var(--radius) var(--radius) 0 0;
     background: var(--bg-raised);
+    position: relative;
+}
+
+.car-card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.car-card-img:hover img {
+    transform: scale(1.04);
+}
+
+.car-card-img-placeholder {
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 5rem;
+    font-size: 3rem;
     color: var(--text-dim);
 }
 
-.car-card-img img { width: 100%; height: 200px; object-fit: cover; }
 
 .car-card-body { padding: 1.3rem; }
+
 
 .car-badge {
     display: inline-block;
@@ -305,13 +359,16 @@ a:hover { opacity: 0.8; }
     margin-bottom: 0.7rem;
 }
 
+
 .badge-economy  { background: rgba(52,168,83,0.15);  color: #34a853; border: 1px solid rgba(52,168,83,0.3); }
 .badge-comfort  { background: rgba(66,133,244,0.15); color: #4285f4; border: 1px solid rgba(66,133,244,0.3); }
 .badge-suv      { background: rgba(251,188,5,0.15);  color: #fbbc05; border: 1px solid rgba(251,188,5,0.3); }
 .badge-premium  { background: rgba(230,57,70,0.15);  color: #e63946; border: 1px solid rgba(230,57,70,0.3); }
 
+
 .car-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
 .car-plate { color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.06em; margin-bottom: 0.8rem; }
+
 
 .car-meta {
     display: flex;
@@ -322,6 +379,7 @@ a:hover { opacity: 0.8; }
 }
 .car-meta i { color: var(--accent); }
 
+
 .car-price {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 1.8rem;
@@ -329,6 +387,7 @@ a:hover { opacity: 0.8; }
     line-height: 1;
 }
 .car-price span { font-family: 'DM Sans', sans-serif; font-size: 0.82rem; color: var(--text-muted); font-weight: 400; }
+
 
 .car-card-footer {
     padding: 1rem 1.3rem;
@@ -338,8 +397,28 @@ a:hover { opacity: 0.8; }
     justify-content: space-between;
 }
 
+
 .car-location { color: var(--text-muted); font-size: 0.82rem; }
 .car-location i { color: var(--accent); }
+
+
+/* ---- Popular Badge ---- */
+.popular-badge {
+    position: absolute;
+    top: .6rem;
+    right: .6rem;
+    background: var(--accent);
+    color: #000;
+    font-size: .7rem;
+    font-weight: 600;
+    padding: .2rem .55rem;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    z-index: 1;
+}
+
 
 /* ---- Filter Bar ---- */
 .filter-bar {
@@ -350,6 +429,7 @@ a:hover { opacity: 0.8; }
     margin-bottom: 2rem;
 }
 
+
 .filter-bar .form-select,
 .filter-bar .form-control {
     background: var(--bg-card);
@@ -357,6 +437,7 @@ a:hover { opacity: 0.8; }
     color: var(--text);
     border-radius: var(--radius-sm);
 }
+
 
 .filter-bar .form-select:focus,
 .filter-bar .form-control:focus {
@@ -366,7 +447,9 @@ a:hover { opacity: 0.8; }
     color: var(--text);
 }
 
+
 .filter-bar .form-select option { background: var(--bg-card); }
+
 
 /* ---- Forms ---- */
 .dn-form-card {
@@ -378,6 +461,7 @@ a:hover { opacity: 0.8; }
     margin: 0 auto;
 }
 
+
 .dn-form-card .form-label {
     color: var(--text-muted);
     font-size: 0.85rem;
@@ -385,6 +469,7 @@ a:hover { opacity: 0.8; }
     letter-spacing: 0.04em;
     margin-bottom: 0.4rem;
 }
+
 
 .dn-form-card .form-control,
 .dn-form-card .form-select {
@@ -397,6 +482,7 @@ a:hover { opacity: 0.8; }
     transition: border-color var(--transition), box-shadow var(--transition);
 }
 
+
 .dn-form-card .form-control:focus,
 .dn-form-card .form-select:focus {
     border-color: var(--border-acc);
@@ -405,11 +491,14 @@ a:hover { opacity: 0.8; }
     color: var(--text);
 }
 
+
 .form-control::placeholder { color: var(--text-dim); }
+
 
 .form-error { color: #f94144; font-size: 0.82rem; margin-top: 0.3rem; }
 .alert-error { background: rgba(249,65,68,0.1); border: 1px solid rgba(249,65,68,0.3); color: #f94144; border-radius: var(--radius-sm); padding: 0.8rem 1rem; }
 .alert-success { background: rgba(52,168,83,0.1); border: 1px solid rgba(52,168,83,0.3); color: #34a853; border-radius: var(--radius-sm); padding: 0.8rem 1rem; }
+
 
 /* ---- How It Works ---- */
 .how-card {
@@ -431,6 +520,7 @@ a:hover { opacity: 0.8; }
     line-height: 1;
     user-select: none;
 }
+
 
 /* ---- Bookings Table ---- */
 .dn-table {
@@ -455,6 +545,7 @@ a:hover { opacity: 0.8; }
 }
 .dn-table tr:hover td { background: rgba(255,255,255,0.02); }
 
+
 .status-pill {
     display: inline-block;
     padding: 0.25rem 0.75rem;
@@ -469,6 +560,7 @@ a:hover { opacity: 0.8; }
 .status-cancelled { background: rgba(249,65,68,0.15); color: #f94144; }
 .status-completed { background: rgba(66,133,244,0.15); color: #4285f4; }
 
+
 /* ---- Admin Panel ---- */
 .admin-sidebar {
     background: var(--bg-surface);
@@ -481,6 +573,7 @@ a:hover { opacity: 0.8; }
     z-index: 100;
 }
 
+
 .admin-logo {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 1.5rem;
@@ -489,6 +582,7 @@ a:hover { opacity: 0.8; }
     border-bottom: 1px solid var(--border);
     margin-bottom: 1rem;
 }
+
 
 .admin-nav-link {
     display: flex;
@@ -509,11 +603,13 @@ a:hover { opacity: 0.8; }
 }
 .admin-nav-link i { font-size: 1rem; width: 20px; }
 
+
 .admin-content {
     margin-left: 240px;
     padding: 2rem;
     min-height: 100vh;
 }
+
 
 .stat-card {
     background: var(--bg-card);
@@ -527,6 +623,7 @@ a:hover { opacity: 0.8; }
 .stat-card-label { color: var(--text-muted); font-size: 0.82rem; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 0.3rem; }
 .stat-card-icon { font-size: 2rem; opacity: 0.3; }
 
+
 /* ---- Reviews ---- */
 .review-card {
     background: var(--bg-card);
@@ -539,6 +636,7 @@ a:hover { opacity: 0.8; }
 .review-stars { color: #fbbc05; font-size: 1rem; }
 .review-text { color: var(--text-muted); font-size: 0.92rem; margin: 0.7rem 0; }
 .review-author { color: var(--text-dim); font-size: 0.8rem; }
+
 
 /* ---- Page Headers ---- */
 .page-header {
@@ -557,6 +655,7 @@ a:hover { opacity: 0.8; }
     background: radial-gradient(circle, rgba(230,57,70,0.06) 0%, transparent 70%);
 }
 
+
 /* ---- Booking Form ---- */
 .booking-summary-card {
     background: var(--bg-card);
@@ -569,6 +668,7 @@ a:hover { opacity: 0.8; }
 .price-breakdown { font-size: 0.88rem; color: var(--text-muted); }
 .price-total { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--text); }
 
+
 /* ---- Stars Input ---- */
 .star-rating { display: flex; flex-direction: row-reverse; gap: 0.3rem; }
 .star-rating input { display: none; }
@@ -576,6 +676,7 @@ a:hover { opacity: 0.8; }
 .star-rating input:checked ~ label,
 .star-rating label:hover,
 .star-rating label:hover ~ label { color: #fbbc05; }
+
 
 /* ---- Animations ---- */
 @keyframes fadeUp {
@@ -586,6 +687,7 @@ a:hover { opacity: 0.8; }
     from { opacity: 0; transform: translateX(40px); }
     to   { opacity: 1; transform: translateX(0); }
 }
+
 
 /* ---- Footer ---- */
 .dn-footer {
@@ -603,6 +705,7 @@ a:hover { opacity: 0.8; }
 .footer-divider { border-color: var(--border); margin: 2rem 0 1rem; }
 .footer-copy { color: var(--text-dim); font-size: 0.8rem; text-align: center; }
 
+
 /* ---- Utilities ---- */
 .text-accent { color: var(--accent); }
 .text-muted-dn { color: var(--text-muted); }
@@ -610,20 +713,25 @@ a:hover { opacity: 0.8; }
 .border-dn { border-color: var(--border) !important; }
 .divider { border-color: var(--border); }
 
+
 /* ---- About Page ---- */
 .about-hero { padding: 5rem 0 4rem; border-bottom: 1px solid var(--border); }
 .about-hero-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3rem, 7vw, 5.5rem); line-height: 1.05; margin-bottom: 1.25rem; }
 .about-hero-sub { font-size: 1.05rem; color: var(--text-muted); max-width: 560px; }
 
+
 .about-section { padding: 5rem 0; }
 .about-section--alt { background: var(--bg-card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .section-body { color: var(--text-muted); line-height: 1.75; margin-bottom: 1rem; max-width: 60ch; }
 
+
 .about-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
 
 .value-icon { font-size: 1.6rem; color: var(--accent); margin-bottom: 1rem; }
 .value-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
 .value-body { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; margin: 0; }
+
 
 .how-steps { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .how-step { padding: 2rem 1.75rem; border-right: 1px solid var(--border); }
@@ -631,45 +739,15 @@ a:hover { opacity: 0.8; }
 .how-step-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
 .how-step-body { font-size: 0.875rem; color: var(--text-muted); line-height: 1.7; margin: 0; }
 
+
 .about-cta { padding: 5rem 0; border-top: 1px solid var(--border); }
 .about-cta-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2rem, 4vw, 3.5rem); margin-bottom: 0.75rem; }
 .about-cta-sub { color: var(--text-muted); margin-bottom: 2rem; font-size: 1.05rem; }
 
+
 @media (max-width: 767px) {
     .how-step { border-right: none; border-bottom: 1px solid var(--border); }
     .how-step:last-child { border-bottom: none; }
-}
-
-/* ── Car Card Image ─────────────────────────── */
-.car-card-img {
-    width: 100%;
-    height: 200px;
-    overflow: hidden;
-    border-radius: var(--radius) var(--radius) 0 0;
-    background: var(--bg-card);
-}
-
-.car-card-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    display: block;
-    transition: transform 0.3s ease;
-}
-
-.car-card-img:hover img {
-    transform: scale(1.04);
-}
-
-.car-card-img-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-    color: var(--text-muted);
 }
 
 /* ---- Responsive ---- */

@@ -15,6 +15,11 @@ Thumbs.db
 # Uploaded images stay on server, don't overwrite via git
 /uploads/*
 !/uploads/.gitkeep
+!/uploads/cars/
+/uploads/cars/*
+!/uploads/cars/*.jpg
+!/uploads/cars/*.png
+!/uploads/cars/*.webp
 
 # Node (if ever used)
 node_modules/

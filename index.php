@@ -3,6 +3,10 @@ $pageTitle = 'Home';
 require_once 'includes/header.php';
 require_once 'includes/db-connect.php';
 
+// Fetch Total number of cars and locations
+$totalCars = $conn->query("SELECT COUNT(*) AS n FROM cars WHERE is_available = 1")->fetch_assoc()['n'];
+$totalLocations = $conn->query("SELECT COUNT(DISTINCT location) AS n FROM cars WHERE is_available = 1")->fetch_assoc()['n'];
+
 // Fetch 3 featured cars
 $result = $conn->query("SELECT * FROM cars WHERE is_available = 1 ORDER BY created_at DESC LIMIT 3");
 $featuredCars = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
@@ -17,9 +21,17 @@ $reviewResult = $conn->query("
 ");
 $reviews = $reviewResult ? $reviewResult->fetch_all(MYSQLI_ASSOC) : [];
 
-$categoryIcons = [
-    'Economy' => '🚗', 'Comfort' => '🚙', 'SUV' => '🚐', 'Premium' => '🏎️'
-];
+// Popular cars for homepage
+$popular_cars = $conn->query("
+    SELECT c.car_id, c.make, c.model, c.category, c.price_per_hr,
+           c.image_url, COUNT(b.booking_id) AS booking_count
+    FROM cars c
+    LEFT JOIN bookings b ON c.car_id = b.car_id AND b.status != 'cancelled'
+    WHERE c.is_available = 1
+    GROUP BY c.car_id
+    ORDER BY booking_count DESC
+    LIMIT 4
+")->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <!-- Hero -->
@@ -30,7 +42,7 @@ $categoryIcons = [
         <div class="row">
             <div class="col-lg-6">
                 <div class="hero-eyebrow">
-                    <i class="bi bi-lightning-charge-fill"></i> Singapore's #1 Hourly Rental
+                    <i class="bi bi-lightning-charge-fill"></i> Singapore's Hourly Car Rental
                 </div>
                 <h1 class="hero-title">
                     Drive<br>
@@ -49,12 +61,12 @@ $categoryIcons = [
                 </div>
                 <div class="hero-stats">
                     <div>
-                        <div class="stat-val">500<span>+</span></div>
-                        <div class="stat-label">Cars Available</div>
+                        <div class="stat-val"><?php echo $totalCars; ?></div>
+                        <div class="stat-label">Cars Available<br><small>with more to come</small></div>
                     </div>
                     <div>
-                        <div class="stat-val">50<span>+</span></div>
-                        <div class="stat-label">Locations</div>
+                        <div class="stat-val"><?php echo $totalLocations; ?></div>
+                        <div class="stat-label">Location<?php echo $totalLocations != 1 ? 's' : ''; ?></div>
                     </div>
                     <div>
                         <div class="stat-val">S$8<span>.50/hr</span></div>
@@ -121,9 +133,11 @@ $categoryIcons = [
                 <div class="car-card">
                     <div class="car-card-img">
                         <?php if (!empty($car['image_url'])): ?>
-                            <img src="<?php echo h($car['image_url']); ?>" alt="<?php echo h($car['make'].' '.$car['model']); ?>">
+                            <img src="<?php echo BASE; ?>/uploads/cars/<?php echo h($car['image_url']); ?>" alt="<?php echo h($car['make'].' '.$car['model']); ?>">
                         <?php else: ?>
-                            <?php echo $categoryIcons[$car['category']] ?? '🚗'; ?>
+                            <div class="car-card-img-placeholder">
+                                <i class="bi bi-car-front"></i>
+                            </div>
                         <?php endif; ?>
                     </div>
                     <div class="car-card-body">
@@ -145,6 +159,59 @@ $categoryIcons = [
             <?php endforeach; ?>
         </div>
         <?php endif; ?>
+    </div>
+</section>
+
+<!-- ── Popular Cars Section ───────────────── -->
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <p class="section-label mb-1">Trusted by our customers</p>
+                <h2 style="font-family:'Bebas Neue',sans-serif;font-size:2rem;margin:0;">
+                    Most Popular Cars
+                </h2>
+            </div>
+            <a href="<?php echo BASE; ?>/cars.php" class="btn btn-outline-light btn-sm">
+                View All <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <?php foreach ($popular_cars as $car): ?>
+            <div class="col-sm-6 col-lg-3">
+                <div class="car-card h-100">
+                    <div class="car-card-img">
+                        <?php if (!empty($car['image_url'])): ?>
+                            <img src="<?php echo BASE; ?>/uploads/cars/<?php echo h($car['image_url']); ?>"
+                                 alt="<?php echo h($car['make'].' '.$car['model']); ?>"
+                                 loading="lazy">
+                        <?php else: ?>
+                            <div class="car-card-img-placeholder">
+                                <i class="bi bi-car-front"></i>
+                            </div>
+                        <?php endif; ?>
+                        <?php if ($car['booking_count'] > 0): ?>
+                        <span class="popular-badge">
+                            <i class="bi bi-fire"></i> <?php echo $car['booking_count']; ?> rides
+                        </span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="car-card-body">
+                        <span class=
+                        "car-category-badge"><?php echo h($car['category']); ?></span>
+                        <h5 class="car-title"><?php echo h($car['make'].' '.$car['model']); ?></h5>
+                        <div class="car-price">
+                            S$<?php echo number_format($car['price_per_hr'], 2); ?>
+                            <span class="car-price-unit">/ hour</span>
+                        </div>
+                        <a href="<?php echo BASE; ?>/book.php?car_id=<?php echo (int)$car['car_id']; ?>"
+                           class="btn btn-accent w-100 mt-2">Book Now</a>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
     </div>
 </section>
 

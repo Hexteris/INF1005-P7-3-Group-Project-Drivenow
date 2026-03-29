@@ -10,11 +10,34 @@ $totalMembers  = $conn->query("SELECT COUNT(*) AS n FROM members")->fetch_assoc(
 $revenue       = $conn->query("SELECT COALESCE(SUM(total_cost),0) AS rev FROM bookings WHERE status='completed'")->fetch_assoc()['rev'];
 $pendingCount  = $conn->query("SELECT COUNT(*) AS n FROM bookings WHERE status='pending'")->fetch_assoc()['n'];
 
-// Recent bookings
+$popular_cars = $conn->query("
+    SELECT c.make, c.model, c.category,
+           COUNT(b.booking_id) AS total_bookings,
+           COALESCE(SUM(b.total_cost), 0) AS total_revenue
+    FROM cars c
+    LEFT JOIN bookings b ON c.car_id = b.car_id
+    GROUP BY c.car_id
+    ORDER BY total_bookings DESC
+    LIMIT 5
+")->fetch_all(MYSQLI_ASSOC);
+
+$top_customers = $conn->query("
+    SELECT m.full_name, m.email,
+           COUNT(b.booking_id) AS total_bookings,
+           COALESCE(SUM(b.total_cost), 0) AS total_spent
+    FROM members m
+    LEFT JOIN bookings b ON m.member_id = b.member_id
+    GROUP BY m.member_id
+    ORDER BY total_bookings DESC
+    LIMIT 5
+")->fetch_all(MYSQLI_ASSOC);
+
 $recent = $conn->query("
     SELECT b.booking_id, b.start_time, b.end_time, b.total_cost, b.status,
            m.full_name, c.make, c.model
-    FROM bookings b JOIN members m ON b.member_id=m.member_id JOIN cars c ON b.car_id=c.car_id
+    FROM bookings b
+    JOIN members m ON b.member_id = m.member_id
+    JOIN cars c ON b.car_id = c.car_id
     ORDER BY b.created_at DESC LIMIT 8
 ")->fetch_all(MYSQLI_ASSOC);
 ?>
@@ -81,6 +104,50 @@ $recent = $conn->query("
     </div>
 </div>
 
+<!-- Analytics Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);">
+            <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);">
+                <h5 style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;margin:0;">
+                    <i class="bi bi-car-front text-accent me-2"></i>Most Popular Cars
+                </h5>
+            </div>
+            <div style="padding:.5rem 0;">
+                <?php foreach ($popular_cars as $i => $car): ?>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 1.5rem;<?php echo $i < count($popular_cars)-1 ? 'border-bottom:1px solid var(--border);' : ''; ?>">
+                    <div>
+                        <div style="font-weight:600;"><?php echo h($car['make'].' '.$car['model']); ?></div>
+                        <div style="font-size:.8rem;color:var(--text-muted);"><?php echo h($car['category']); ?> · S$<?php echo number_format($car['total_revenue'], 0); ?> earned</div>
+                    </div>
+                    <span style="color:var(--accent);font-weight:700;"><?php echo $car['total_bookings']; ?> <small style="color:var(--text-muted);font-weight:400;">bookings</small></span>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);">
+            <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);">
+                <h5 style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;margin:0;">
+                    <i class="bi bi-people text-accent me-2"></i>Top Customers
+                </h5>
+            </div>
+            <div style="padding:.5rem 0;">
+                <?php foreach ($top_customers as $i => $cust): ?>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 1.5rem;<?php echo $i < count($top_customers)-1 ? 'border-bottom:1px solid var(--border);' : ''; ?>">
+                    <div>
+                        <div style="font-weight:600;"><?php echo h($cust['full_name']); ?></div>
+                        <div style="font-size:.8rem;color:var(--text-muted);"><?php echo h($cust['email']); ?></div>
+                    </div>
+                    <span style="color:var(--accent);font-weight:700;"><?php echo $cust['total_bookings']; ?> <small style="color:var(--text-muted);font-weight:400;">· S$<?php echo number_format($cust['total_spent'], 0); ?></small></span>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Recent Bookings -->
 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);">
     <div style="padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
@@ -99,7 +166,7 @@ $recent = $conn->query("
                     <td><?php echo h($b['full_name']); ?></td>
                     <td><?php echo h($b['make'].' '.$b['model']); ?></td>
                     <td><?php echo date('d M, H:i', strtotime($b['start_time'])); ?></td>
-                    <td>S$ <?php echo number_format($b['total_cost'],2); ?></td>
+                    <td>S$ <?php echo number_format($b['total_cost'], 2); ?></td>
                     <td><span class="status-pill status-<?php echo h($b['status']); ?>"><?php echo h($b['status']); ?></span></td>
                 </tr>
                 <?php endforeach; ?>
