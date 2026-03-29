@@ -145,7 +145,9 @@ $mapJson = json_encode(array_map(fn($c) => [
                          style="cursor:pointer;">
                         <div class="car-card-img">
                             <?php if (!empty($car['image_url'])): ?>
-                                <img src="<?php echo h($car['image_url']); ?>" alt="<?php echo h($car['make'].' '.$car['model']); ?>">
+                               <img src="<?php echo BASE; ?>/uploads/cars/<?php echo h($car['image_url']); ?>"
+                                    alt="<?php echo h($car['make'].' '.$car['model']); ?>"
+                                    loading="lazy">
                             <?php else: ?>
                                 <?php echo $categoryIcons[$car['category']] ?? '🚗'; ?>
                             <?php endif; ?>
