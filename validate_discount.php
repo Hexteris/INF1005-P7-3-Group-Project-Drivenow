@@ -20,7 +20,7 @@ $response = [
 ];
 
 if (!empty($code) && $hours > 0 && $price_per_hr > 0) {
-    // First, check if user has already used a discount before
+    // First, check if user has already used a referral code before
     $usedChk = $conn->prepare("SELECT discount_used FROM referral_records WHERE referred_user_id = ? AND discount_used = TRUE");
     $usedChk->bind_param("i", $mid);
     $usedChk->execute();
@@ -29,29 +29,41 @@ if (!empty($code) && $hours > 0 && $price_per_hr > 0) {
     $usedChk->close();
 
     if ($hasUsedDiscount) {
-        $response['message'] = 'You’ve already used a referral code for your first booking.';
+        $response['message'] = 'You have already used a referral code for a previous booking.';
     } else {
-        // Check if the code is valid
-        $stmt = $conn->prepare("SELECT member_id FROM members WHERE referral_code = ?");
-        $stmt->bind_param("s", $code);
-        $stmt->execute();
-        $result = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
+        // Next, check if user has confirmed/completed any booking before
+        $firstBookingChk = $conn->prepare("SELECT booking_id FROM bookings WHERE member_id = ? AND status IN ('confirmed', 'completed') LIMIT 1");
+        $firstBookingChk->bind_param("i", $mid);
+        $firstBookingChk->execute();
+        $firstBookingChk->store_result();
+        $hasConfirmedBooking = $firstBookingChk->num_rows > 0;
+        $firstBookingChk->close();
 
-        if ($result && $result['member_id'] != $mid) {
-
-            $discountPercent = 15;
-            $discountMultiplier = 1 - ($discountPercent / 100);
-            $response['valid'] = true;
-            $response['discountpercent'] = $discountPercent;
-            $response['discountedCost'] = round($hours * $price_per_hr * $discountMultiplier, 2);
-            $response['message'] = $discountPercent . '% discount applied!';
-        } elseif ($result && $result['member_id'] == $mid) {
-            $response['message'] = 'You cannot use your own referral code.';
+        if ($hasConfirmedBooking) {
+            $response['message'] = 'Referral codes are only valid for your first booking.';
         } else {
-            $response['message'] = 'Invalid referral code.';
+            // Next, check if the code is valid
+            $stmt = $conn->prepare("SELECT member_id FROM members WHERE referral_code = ?");
+            $stmt->bind_param("s", $code);
+            $stmt->execute();
+            $result = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            if (!$result) {
+                $response['message'] = 'Invalid referral code.';
+            } elseif ($result['member_id'] == $mid) {
+                $response['message'] = 'You cannot use your own referral code.';
+            } else {
+                // Apply discount
+                $discountPercent = 15;
+                $discountMultiplier = 1 - ($discountPercent / 100);
+                $response['valid'] = true;
+                $response['discountpercent'] = $discountPercent;
+                $response['discountedCost'] = round($hours * $price_per_hr * $discountMultiplier, 2);
+                $response['message'] = $discountPercent . '% discount applied!';
+            }
         }
-    }
+    } 
 }
 
 header('Content-Type: application/json');

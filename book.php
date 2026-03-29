@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     // Validate referral code if provided
                     if (!empty($referral_code)) {
-                        // First, check if user has already used ANY discount code before
+                        // First, check if user has already used a referral code before
                         $usedChk = $conn->prepare("SELECT discount_used FROM referral_records WHERE referred_user_id = ? AND discount_used = TRUE");
                         $usedChk->bind_param("i", $mid);
                         $usedChk->execute();
@@ -104,27 +104,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if ($hasUsedDiscount) {
                             $error = 'You have already used a referral code for a previous booking.';
                         } else {
-                            // Check if the code is valid
-                            $refChk = $conn->prepare("SELECT member_id FROM members WHERE referral_code = ?");
-                            $refChk->bind_param("s", $referral_code);
-                            $refChk->execute();
-                            $result = $refChk->get_result()->fetch_assoc();
-                            $refChk->close();
+                            // Next, check if user has confirmed/completed any booking before
+                            $firstBookingChk = $conn->prepare("SELECT booking_id FROM bookings WHERE member_id = ? AND status IN ('confirmed', 'completed') LIMIT 1");
+                            $firstBookingChk->bind_param("i", $mid);
+                            $firstBookingChk->execute();
+                            $firstBookingChk->store_result();
+                            $hasConfirmedBooking = $firstBookingChk->num_rows > 0;
+                            $firstBookingChk->close();
 
-                            if ($result && $result['member_id'] != $mid) {
-                                $referrer_id = $result['member_id'];
-                                $discountPercent = 15;
-                                $discountMultiplier = 1 - ($discountPercent / 100);
-                                $cost = round($cost * $discountMultiplier, 2);
-                                $discount_applied = true;
-                            } elseif ($result && $result['member_id'] == $mid) {
-                                $error = 'You cannot use your own referral code.';
+                            if ($hasConfirmedBooking) {
+                                  $error = 'Referral codes are only valid for your first booking.';
                             } else {
-                                $error = 'Invalid referral code.';
+                                // Next, check if the code is valid
+                                $refChk = $conn->prepare("SELECT member_id FROM members WHERE referral_code = ?");
+                                $refChk->bind_param("s", $referral_code);
+                                $refChk->execute();
+                                $result = $refChk->get_result()->fetch_assoc();
+                                $refChk->close();
+
+                                if (!$result) {
+                                    $error = 'Invalid referral code.';
+                                } elseif ($result['member_id'] == $mid) {
+                                    $error = 'You cannot use your own referral code.';
+                                } else {
+                                    // Apply discount
+                                    $referrer_id = $result['member_id'];
+                                    $discountPercent = 15;
+                                    $discountMultiplier = 1 - ($discountPercent / 100);
+                                    $cost = round($cost * $discountMultiplier, 2);
+                                    $discount_applied = true;
+                                }
                             }
                         }
                     }
-                    
+
                     if (!$error)
                     $ins = $conn->prepare("
                         INSERT INTO bookings (member_id, car_id, start_time, end_time, total_cost, status)
