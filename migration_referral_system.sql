@@ -17,5 +17,5 @@ CREATE TABLE referral_records (
 
   FOREIGN KEY (referrer_user_id) REFERENCES members(member_id),
   FOREIGN KEY (referred_user_id) REFERENCES members(member_id),
-  FOREIGN KEY (booking_id) REFERENCES bookings(booking_id),
+  FOREIGN KEY (booking_id) REFERENCES bookings(booking_id)
 );
