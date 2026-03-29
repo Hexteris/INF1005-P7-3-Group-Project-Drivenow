@@ -1,5 +1,6 @@
 <?php
 $pageTitle = 'About Us';
+require_once 'includes/db-connect.php'; 
 require_once 'includes/header.php';
 ?>
 
@@ -23,6 +24,15 @@ require_once 'includes/header.php';
 <!-- WHO WE ARE -->
 <section class="about-section">
     <div class="container">
+
+        <?php
+        // Pull live stats from DB
+        $totalMembers  = $conn->query("SELECT COUNT(*) AS n FROM members")->fetch_assoc()['n'];
+        $totalCars     = $conn->query("SELECT COUNT(*) AS n FROM cars")->fetch_assoc()['n'];
+        $avgRating     = $conn->query("SELECT ROUND(AVG(rating), 1) AS avg FROM reviews")->fetch_assoc()['avg'];
+        $avgRating     = $avgRating ?? 'New'; // fallback if no reviews yet
+        ?>
+
         <div class="row align-items-center gy-5">
             <div class="col-lg-6">
                 <p class="section-label">Who We Are</p>
@@ -41,11 +51,11 @@ require_once 'includes/header.php';
             <div class="col-lg-5 offset-lg-1">
                 <div class="about-stat-grid">
                     <div class="about-stat-card">
-                        <div class="about-stat-num text-accent">500+</div>
+                        <div class="about-stat-num text-accent"><?php echo $totalMembers; ?>+</div>
                         <div class="about-stat-label">Happy Members</div>
                     </div>
                     <div class="about-stat-card">
-                        <div class="about-stat-num text-accent">50+</div>
+                        <div class="about-stat-num text-accent"><?php echo $totalCars; ?>+</div>
                         <div class="about-stat-label">Cars in Fleet</div>
                     </div>
                     <div class="about-stat-card">
@@ -53,7 +63,9 @@ require_once 'includes/header.php';
                         <div class="about-stat-label">Booking Access</div>
                     </div>
                     <div class="about-stat-card">
-                        <div class="about-stat-num text-accent">4.8 ★</div>
+                        <div class="about-stat-num text-accent">
+                            <?php echo is_numeric($avgRating) ? $avgRating . ' ★' : $avgRating; ?>
+                        </div>
                         <div class="about-stat-label">Average Rating</div>
                     </div>
                 </div>
@@ -138,12 +150,13 @@ require_once 'includes/header.php';
 <section class="about-cta">
     <div class="container text-center">
         <h2 class="about-cta-title">Ready to hit the road?</h2>
-        <p class="about-cta-sub">Join thousands of Singaporeans who drive on their own terms.</p>
+        <p class="about-cta-sub">
+            Join our growing community of Singaporeans who drive on their own terms.
+        </p>
         <div class="d-flex gap-3 justify-content-center flex-wrap">
-            <a href="<?php echo BASE; ?>/cars.php" class="btn btn-accent btn-lg">Browse Cars</a>
-            <a href="<?php echo BASE; ?>/register.php" class="btn btn-outline-light btn-lg">Create Account</a>
+            <a href="<?php echo BASE; ?>cars.php" class="btn btn-accent btn-lg">Browse Cars</a>
+            <a href="<?php echo BASE; ?>register.php" class="btn btn-outline-light btn-lg">Create Account</a>
         </div>
-    </div>
 </section>
 
 </main>
