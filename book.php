@@ -447,6 +447,7 @@ function applyReferralDiscount() {
         feedbackEl.textContent = '';
         feedbackEl.style.color = '';
         discountRow.style.display = 'none';
+        document.getElementById('discount_amount').textContent = '- S$ 0.00';
         return;
     }
 
@@ -476,6 +477,7 @@ function applyReferralDiscount() {
             feedbackEl.textContent = data.message;
             feedbackEl.style.color = '#f94144';
             discountRow.style.display = 'none';
+            document.getElementById('discount_amount').textContent = '- S$ 0.00';
         }
     })
     .catch(err => {
