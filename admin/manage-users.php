@@ -48,12 +48,11 @@ $stmt->close();
     <div style="overflow-x:auto;">
         <table class="dn-table">
             <thead>
-                <tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Licence</th><th>Bookings</th><th>Joined</th><th>Action</th></tr>
+                <tr><th>Name</th><th>Email</th><th>Phone</th><th>Licence</th><th>Bookings</th><th>Joined</th><th>Action</th></tr>
             </thead>
             <tbody>
                 <?php foreach ($members as $m): ?>
                 <tr>
-                    <td style="color:var(--text-muted);"><?php echo (int)$m['member_id']; ?></td>
                     <td><?php echo h($m['full_name']); ?></td>
                     <td style="color:var(--text-muted);"><?php echo h($m['email']); ?></td>
                     <td><?php echo h($m['phone'] ?: '–'); ?></td>
