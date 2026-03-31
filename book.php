@@ -6,6 +6,7 @@ requireLogin();
 require_once 'includes/db-connect.php';
 require_once 'includes/config.php';
 
+
 define('GMAPS_KEY', $_ENV['GMAPS_KEY'] ?? '');
 
 $car_id = (int)($_GET['car_id'] ?? 0);
@@ -25,25 +26,25 @@ if (!$car) {
 
 // ── Server-side POST validation ──────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $start_time = $_POST['start_time'] ?? '';
-    $end_time   = $_POST['end_time']  ?? '';
-    $total_cost = (float)($_POST['total_cost'] ?? 0);
+    $start_time    = $_POST['start_time']    ?? '';
+    $end_time      = $_POST['end_time']      ?? '';
+    $total_cost    = (float)($_POST['total_cost'] ?? 0);
     $referral_code = trim($_POST['referral_code'] ?? '');
 
-    $mid  = $_SESSION['member_id'];
+    $mid              = $_SESSION['member_id'];
     $discount_applied = false;
-    $referrer_id = null;
+    $referrer_id      = null;
 
     if (empty($start_time) || empty($end_time)) {
         $error = 'Please select both start and end times.';
     } else {
         $start = new DateTime($start_time);
         $end   = new DateTime($end_time);
-        $now   = new DateTime();
-        // Minimum allowed start = now + 15 mins, snapped to next 15-min boundary
+
+        // Minimum allowed start = now + 15 mins, snapped UP to next 15-min boundary
         $minStart = new DateTime();
         $minStart->modify('+15 minutes');
-        $minMins = (int)$minStart->format('i');
+        $minMins  = (int)$minStart->format('i');
         $snapMins = (int)(ceil($minMins / 15) * 15);
         if ($snapMins >= 60) {
             $minStart->modify('+1 hour');
@@ -53,12 +54,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Snap submitted times to nearest 15 mins
-        $sm = (int)$start->format('i');
+        $sm        = (int)$start->format('i');
         $snappedSm = (int)(round($sm / 15) * 15);
         if ($snappedSm >= 60) { $start->modify('+1 hour'); $start->setTime((int)$start->format('H'), 0, 0); }
         else { $start->setTime((int)$start->format('H'), $snappedSm, 0); }
 
-        $em = (int)$end->format('i');
+        $em        = (int)$end->format('i');
         $snappedEm = (int)(round($em / 15) * 15);
         if ($snappedEm >= 60) { $end->modify('+1 hour'); $end->setTime((int)$end->format('H'), 0, 0); }
         else { $end->setTime((int)$end->format('H'), $snappedEm, 0); }
@@ -89,11 +90,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $hours = ($end->getTimestamp() - $start->getTimestamp()) / 3600;
                     $cost  = round($hours * $car['price_per_hr'], 2);
-                    $mid   = $_SESSION['member_id'];
 
                     // Validate referral code if provided
                     if (!empty($referral_code)) {
-                        // First, check if user has already used a referral code before
                         $usedChk = $conn->prepare("SELECT discount_used FROM referral_records WHERE referred_user_id = ? AND discount_used = TRUE");
                         $usedChk->bind_param("i", $mid);
                         $usedChk->execute();
@@ -104,8 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if ($hasUsedDiscount) {
                             $error = 'You have already used a referral code for a previous booking.';
                         } else {
-                            // Next, check if user has confirmed/completed any booking before
-                            $firstBookingChk = $conn->prepare("SELECT booking_id FROM bookings WHERE member_id = ? AND status IN ('confirmed', 'completed') LIMIT 1");
+                            $firstBookingChk = $conn->prepare("SELECT booking_id FROM bookings WHERE member_id = ? AND status IN ('confirmed','completed') LIMIT 1");
                             $firstBookingChk->bind_param("i", $mid);
                             $firstBookingChk->execute();
                             $firstBookingChk->store_result();
@@ -113,9 +111,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $firstBookingChk->close();
 
                             if ($hasConfirmedBooking) {
-                                  $error = 'Referral codes are only valid for your first booking.';
+                                $error = 'Referral codes are only valid for your first booking.';
                             } else {
-                                // Next, check if the code is valid
                                 $refChk = $conn->prepare("SELECT member_id FROM members WHERE referral_code = ?");
                                 $refChk->bind_param("s", $referral_code);
                                 $refChk->execute();
@@ -127,28 +124,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 } elseif ($result['member_id'] == $mid) {
                                     $error = 'You cannot use your own referral code.';
                                 } else {
-                                    // Apply discount
-                                    $referrer_id = $result['member_id'];
-                                    $discountPercent = 15;
-                                    $discountMultiplier = 1 - ($discountPercent / 100);
-                                    $cost = round($cost * $discountMultiplier, 2);
-                                    $discount_applied = true;
+                                    $referrer_id        = $result['member_id'];
+                                    $discountPercent    = 15;
+                                    $cost               = round($cost * (1 - $discountPercent / 100), 2);
+                                    $discount_applied   = true;
                                 }
                             }
                         }
                     }
 
-                    if (!$error)
-                    $ins = $conn->prepare("
-                        INSERT INTO bookings (member_id, car_id, start_time, end_time, total_cost, status)
-                        VALUES (?, ?, ?, ?, ?, 'pending')
-                    ");
-                    $ins->bind_param("iissd", $mid, $car_id, $start_time, $end_time, $cost);
-                    if ($ins->execute()) {
-                        $bid = $ins->insert_id;
-                        $ins->close();
+                    if (!$error) {
+                        $ins = $conn->prepare("
+                            INSERT INTO bookings (member_id, car_id, start_time, end_time, total_cost, status)
+                            VALUES (?, ?, ?, ?, ?, 'pending')
+                        ");
+                        $ins->bind_param("iissd", $mid, $car_id, $start_time, $end_time, $cost);
+                        if ($ins->execute()) {
+                            $bid = $ins->insert_id;
+                            $ins->close();
 
-                        // Insert referral usage if discount applied
                             if ($discount_applied && $referrer_id) {
                                 $stmt2 = $conn->prepare("
                                     INSERT INTO referral_records (referrer_user_id, referred_user_id, booking_id, discount_used)
@@ -158,14 +152,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $stmt2->execute();
                                 $stmt2->close();
                             }
-                        
-                        // Redirect to payment page
-                        header("Location: " . BASE . "/payment.php?booking_id=" . $bid);
-                        exit();
-                    } else {
-                        $error = 'Booking failed. Please try again.';
+
+                            header("Location: " . BASE . "/payment.php?booking_id=" . $bid);
+                            exit();
+                        } else {
+                            $error = 'Booking failed. Please try again.';
+                        }
+                        if (isset($ins)) $ins->close();
                     }
-                    $ins->close();
                 }
                 $chk->close();
             }
@@ -189,13 +183,204 @@ $bookingsJson = json_encode(array_map(fn($b) => [
     'end'   => $b['end_time'],
 ], $existingBookings));
 
-$categoryIcons = ['Economy'=>'🚗','Comfort'=>'🚙','SUV'=>'🚐','Premium'=>'🏎️'];
-$hasCoords = !empty($car['lat']) && !empty($car['lng']);
-$pickupLat = $hasCoords ? (float)$car['lat'] : null;
-$pickupLng = $hasCoords ? (float)$car['lng'] : null;
+$categoryIcons = ['Economy' => '🚗', 'Comfort' => '🚙', 'SUV' => '🚐', 'Premium' => '🏎️'];
+$hasCoords  = !empty($car['lat']) && !empty($car['lng']);
+$pickupLat  = $hasCoords ? (float)$car['lat'] : null;
+$pickupLng  = $hasCoords ? (float)$car['lng'] : null;
 
 require_once 'includes/header.php';
 ?>
+
+<style>
+/* ── Right panel redesign ─────────────────────────────────── */
+.booking-panel {
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    margin-bottom: 1.5rem;
+}
+
+/* Car hero image */
+.bp-hero {
+    position: relative;
+    height: 200px;
+    background: var(--bg-raised);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.bp-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.bp-hero-icon {
+    font-size: 5rem;
+}
+.bp-hero-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+}
+.bp-hero-rate {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0,0,0,.7);
+    backdrop-filter: blur(4px);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: .85rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .02em;
+}
+.bp-hero-rate span {
+    color: #e63946;
+}
+
+/* Car info rows */
+.bp-info {
+    padding: 1.2rem 1.4rem;
+    border-bottom: 1px solid var(--border);
+}
+.bp-car-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: .04em;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: .2rem;
+}
+.bp-car-plate {
+    font-size: .78rem;
+    color: var(--text-muted);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: .8rem;
+}
+.bp-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.bp-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: .78rem;
+    color: var(--text-muted);
+}
+.bp-tag i { color: #e63946; font-size: 12px; }
+
+/* Stats strip */
+.bp-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+}
+.bp-stat {
+    padding: .9rem 1.4rem;
+    border-right: 1px solid var(--border);
+}
+.bp-stat:last-child { border-right: none; }
+.bp-stat-label {
+    font-size: .72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: .25rem;
+}
+.bp-stat-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.bp-stat-value.accent { color: #e63946; }
+
+/* Map section */
+.bp-map-header {
+    padding: .75rem 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-raised);
+}
+.bp-map-title {
+    font-size: .78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.bp-map-title i { color: #e63946; }
+.bp-map-link {
+    font-size: .75rem;
+    color: #e63946;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: opacity .15s;
+}
+.bp-map-link:hover { opacity: .75; color: #e63946; }
+
+/* Map container — fixed height, no overflow issues */
+.bp-map-container {
+    width: 100%;
+    height: 240px;
+    position: relative;
+    overflow: hidden;
+}
+#pickupMap {
+    width: 100%;
+    height: 100%;
+}
+
+/* Location footer */
+.bp-map-footer {
+    padding: .75rem 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-raised);
+    border-top: 1px solid var(--border);
+}
+.bp-location-text {
+    font-size: .85rem;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.bp-open-maps {
+    flex-shrink: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    padding: 4px 12px;
+    font-size: .75rem;
+    text-decoration: none;
+    transition: border-color .15s, color .15s;
+    white-space: nowrap;
+}
+.bp-open-maps:hover { border-color: #e63946; color: #e63946; }
+</style>
 
 <section class="page-header">
     <div class="container">
@@ -245,7 +430,7 @@ require_once 'includes/header.php';
                 <h4 style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;margin-bottom:.4rem;">Select Date &amp; Time</h4>
                 <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:1.5rem;">
                     <i class="bi bi-info-circle me-1"></i>
-                    Times are in 15-minute slots &middot; Must book at least 15 mins ahead &middot; Minimum rental: 30 mins
+                    Times snap to 15-minute slots &middot; Book at least 15 mins ahead &middot; Minimum rental: 1 hour
                 </p>
 
                 <div id="conflictAlert" class="alert-error mb-3" style="display:none;">
@@ -261,7 +446,6 @@ require_once 'includes/header.php';
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label" for="start_time" style="color:var(--text-muted);font-size:.85rem;">Pickup Date &amp; Time</label>
-                            <!-- min set by JS to enforce 15-min-ahead rule -->
                             <input type="datetime-local" class="form-control" id="start_time" name="start_time"
                                 step="900"
                                 style="background:var(--bg-raised);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:.7rem 1rem;"
@@ -278,11 +462,11 @@ require_once 'includes/header.php';
 
                     <div class="mb-4">
                         <label class="form-label" for="referral_code" style="color:var(--text-muted);font-size:.85rem;">
-                            Referral/Discount Code (Optional)
+                            Referral / Discount Code <span style="font-weight:400;">(Optional)</span>
                         </label>
                         <input type="text" class="form-control" id="referral_code" name="referral_code"
                             style="background:var(--bg-raised);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:.7rem 1rem;"
-                            placeholder="Enter code for discount">
+                            placeholder="Enter code for 15% off first booking">
                         <small id="discount_feedback" style="font-size:.78rem;margin-top:.3rem;display:block;"></small>
                     </div>
 
@@ -311,206 +495,197 @@ require_once 'includes/header.php';
             </div>
         </div>
 
-        <!-- ── RIGHT: Car Summary + Google Map ───────────── -->
+        <!-- ── RIGHT: Redesigned Car Panel ───────────────── -->
         <div class="col-lg-5">
-            <!-- Car summary — normal flow, no sticky -->
-            <div class="booking-summary-card mb-4">
-                <div class="car-card-img mb-3" style="border-radius:var(--radius-sm);height:170px;">
+            <div class="booking-panel">
+
+                <!-- Hero image / icon -->
+                <div class="bp-hero">
                     <?php if (!empty($car['image_url'])): ?>
-                        <img src="<?php echo h($car['image_url']); ?>" alt="Car"
-                            style="width:100%;height:170px;object-fit:cover;border-radius:var(--radius-sm);">
+                        <img src="<?php echo h($car['image_url']); ?>"
+                             alt="<?php echo h($car['make'].' '.$car['model']); ?>">
                     <?php else: ?>
-                        <div style="display:flex;align-items:center;justify-content:center;height:170px;font-size:5rem;background:var(--bg-raised);border-radius:var(--radius-sm);">
-                            <?php echo $categoryIcons[$car['category']] ?? '🚗'; ?>
-                        </div>
+                        <div class="bp-hero-icon"><?php echo $categoryIcons[$car['category']] ?? '🚗'; ?></div>
                     <?php endif; ?>
-                </div>
-                <div class="car-badge badge-<?php echo strtolower(h($car['category'])); ?> mb-2"><?php echo h($car['category']); ?></div>
-                <div class="car-name"><?php echo h($car['make'].' '.$car['model']); ?></div>
-                <div class="car-plate mb-3"><?php echo h($car['plate_no']); ?></div>
-                <div class="car-meta mb-3">
-                    <span><i class="bi bi-people-fill"></i> <?php echo (int)$car['seats']; ?> seats</span>
-                    <span><i class="bi bi-geo-alt-fill"></i> <?php echo h($car['location']); ?></span>
-                </div>
-                <div style="border-top:1px solid var(--border);padding-top:1rem;">
-                    <div class="price-breakdown d-flex justify-content-between">
-                        <span>Hourly Rate</span>
-                        <span style="color:var(--text);font-weight:600;">S$ <?php echo number_format($car['price_per_hr'], 2); ?>/hr</span>
+                    <div class="bp-hero-badge">
+                        <div class="car-badge badge-<?php echo strtolower(h($car['category'])); ?>">
+                            <?php echo h($car['category']); ?>
+                        </div>
+                    </div>
+                    <div class="bp-hero-rate">
+                        <span>S$ <?php echo number_format($car['price_per_hr'], 2); ?></span> / hr
                     </div>
                 </div>
-            </div>
 
-            <!-- Pickup Map — sits naturally below car card, no overlap -->
-            <?php if ($hasCoords): ?>
-            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
-                <div style="padding:.8rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-                    <span style="font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">
-                        <i class="bi bi-pin-map-fill me-2" style="color:#e63946;"></i>Pickup Location
-                    </span>
+                <!-- Car name + plate -->
+                <div class="bp-info">
+                    <div class="bp-car-name"><?php echo h($car['make'] . ' ' . $car['model']); ?></div>
+                    <div class="bp-car-plate"><?php echo h($car['plate_no']); ?></div>
+                    <div class="bp-tags">
+                        <span class="bp-tag">
+                            <i class="bi bi-people-fill"></i>
+                            <?php echo (int)$car['seats']; ?> seats
+                        </span>
+                        <span class="bp-tag">
+                            <i class="bi bi-geo-alt-fill"></i>
+                            <?php echo h($car['location']); ?>
+                        </span>
+                        <span class="bp-tag">
+                            <i class="bi bi-circle-fill" style="color:#34a853;font-size:7px;"></i>
+                            Available
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Stats strip -->
+                <div class="bp-stats">
+                    <div class="bp-stat">
+                        <div class="bp-stat-label">Hourly rate</div>
+                        <div class="bp-stat-value accent">S$ <?php echo number_format($car['price_per_hr'], 2); ?></div>
+                    </div>
+                    <div class="bp-stat">
+                        <div class="bp-stat-label">Min. rental</div>
+                        <div class="bp-stat-value">1 hour</div>
+                    </div>
+                </div>
+
+                <?php if ($hasCoords): ?>
+                <!-- Map header -->
+                <div class="bp-map-header">
+                    <div class="bp-map-title">
+                        <i class="bi bi-pin-map-fill"></i>Pickup location
+                    </div>
                     <a href="https://www.google.com/maps/dir/?api=1&destination=<?php echo $pickupLat; ?>,<?php echo $pickupLng; ?>"
-                       target="_blank" rel="noopener"
-                       style="font-size:.78rem;color:#e63946;text-decoration:none;">
-                        <i class="bi bi-box-arrow-up-right me-1"></i>Get Directions
+                       target="_blank" rel="noopener" class="bp-map-link">
+                        <i class="bi bi-signpost-split"></i> Get Directions
                     </a>
                 </div>
-                <!-- gestureHandling:'cooperative' stops map hijacking page scroll -->
-                <div id="pickupMap" style="width:100%;height:260px;"></div>
-                <div style="padding:.75rem 1.2rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.6rem;">
-                    <i class="bi bi-geo-alt-fill" style="color:#e63946;font-size:1rem;"></i>
-                    <span style="font-size:.88rem;font-weight:500;"><?php echo h($car['location']); ?></span>
+
+                <!-- Map — fixed height container, overflow hidden, no bleed -->
+                <div class="bp-map-container">
+                    <div id="pickupMap"></div>
+                </div>
+
+                <!-- Location footer — always visible below map -->
+                <div class="bp-map-footer">
+                    <i class="bi bi-geo-alt-fill" style="color:#e63946;font-size:.95rem;flex-shrink:0;"></i>
+                    <span class="bp-location-text"><?php echo h($car['location']); ?>, Singapore</span>
                     <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($car['location'] . ', Singapore'); ?>"
-                       target="_blank" rel="noopener"
-                       class="btn btn-sm ms-auto"
-                       style="background:var(--bg-raised);border:1px solid var(--border);color:var(--text);font-size:.78rem;">
-                        Open in Maps
+                       target="_blank" rel="noopener" class="bp-open-maps">
+                        Open in Maps <i class="bi bi-box-arrow-up-right" style="font-size:.7rem;"></i>
                     </a>
                 </div>
-            </div>
-            <?php else: ?>
-            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;text-align:center;">
-                <i class="bi bi-geo-alt" style="font-size:2rem;color:var(--text-muted);"></i>
-                <p class="text-muted-dn mt-2 mb-1" style="font-size:.88rem;">
-                    Pickup: <strong><?php echo h($car['location']); ?></strong>
-                </p>
-                <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($car['location'] . ', Singapore'); ?>"
-                   target="_blank" rel="noopener"
-                   class="btn btn-sm btn-outline-light mt-1" style="font-size:.8rem;">
-                    Search on Google Maps
-                </a>
-            </div>
-            <?php endif; ?>
+
+                <?php else: ?>
+                <!-- No coords fallback -->
+                <div style="padding:1.2rem 1.4rem;text-align:center;border-top:1px solid var(--border);">
+                    <i class="bi bi-geo-alt" style="font-size:1.8rem;color:var(--text-muted);"></i>
+                    <p style="font-size:.85rem;color:var(--text-muted);margin:.5rem 0 .8rem;">
+                        <?php echo h($car['location']); ?>
+                    </p>
+                    <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($car['location'] . ', Singapore'); ?>"
+                       target="_blank" rel="noopener" class="btn btn-sm btn-outline-light" style="font-size:.8rem;">
+                        Search on Google Maps
+                    </a>
+                </div>
+                <?php endif; ?>
+
+            </div><!-- /.booking-panel -->
         </div>
     </div>
 </div>
 
+<!-- ── Referral / price JS ───────────────────────────────── -->
 <script>
-// Calculate price based on duration
 function calculatePrice() {
-    const start = document.getElementById('start_time').value;
-    const end = document.getElementById('end_time').value;
+    const start      = document.getElementById('start_time').value;
+    const end        = document.getElementById('end_time').value;
     const pricePerHr = parseFloat(document.getElementById('price_per_hr').value);
 
     if (start && end) {
-        const startDate = new Date(start);
-        const endDate = new Date(end);
-        const hours = (endDate - startDate) / (1000 * 60 * 60);
-
+        const hours = (new Date(end) - new Date(start)) / 3600000;
         if (hours > 0) {
-            document.getElementById('hours_output').textContent = hours.toFixed(1) + ' hrs';
-            document.getElementById('hours_output').dataset.hours = hours;
-            
-            // Calculate discount if a code has been entered
+            document.getElementById('hours_output').textContent       = hours.toFixed(1) + ' hrs';
+            document.getElementById('hours_output').dataset.hours     = hours;
             const code = document.getElementById('referral_code').value.trim();
-            if (code) {
-                applyReferralDiscount();
-            } else {
-                // Show base price without discount
-                const baseCost = hours * pricePerHr;
-                document.getElementById('price_output').textContent = `S$ ${baseCost.toFixed(2)}`;
-                document.getElementById('total_cost').value = baseCost.toFixed(2);
-            }
+            code ? applyReferralDiscount() : showBasePrice(hours, pricePerHr);
         } else {
             document.getElementById('hours_output').textContent = '–';
             document.getElementById('price_output').textContent = 'S$ 0.00';
-            document.getElementById('total_cost').value = '0';
+            document.getElementById('total_cost').value         = '0';
         }
     }
 }
 
-// Validate and apply referral discount
-function applyReferralDiscount() {
-    const code = document.getElementById('referral_code').value.trim();
-    const hoursEl = document.getElementById('hours_output');
-    // Try to get hours from dataset, otherwise parse from text content
-    let hours = parseFloat(hoursEl.dataset.hours || 0);
-    if (!hours && hoursEl.textContent) {
-        const match = hoursEl.textContent.match(/([\d.]+)\s*(hr|min)/);
-        if (match) {
-            hours = match[2] === 'min' ? parseFloat(match[1]) / 60 : parseFloat(match[1]);
-        }
-    }
-    const pricePerHr = parseFloat(document.getElementById('price_per_hr').value);
-    const feedbackEl = document.getElementById('discount_feedback');
-    const discountRow = document.getElementById('discount_row');
+function showBasePrice(hours, pricePerHr) {
+    const base = hours * pricePerHr;
+    document.getElementById('price_output').textContent = `S$ ${base.toFixed(2)}`;
+    document.getElementById('total_cost').value         = base.toFixed(2);
+}
 
-    if (!hours || !pricePerHr) {
-        // Can't calculate yet, just show base price
-        return;
+function applyReferralDiscount() {
+    const code      = document.getElementById('referral_code').value.trim();
+    const hoursEl   = document.getElementById('hours_output');
+    let   hours     = parseFloat(hoursEl.dataset.hours || 0);
+    if (!hours && hoursEl.textContent) {
+        const m = hoursEl.textContent.match(/([\d.]+)\s*(hr|min)/);
+        if (m) hours = m[2] === 'min' ? parseFloat(m[1]) / 60 : parseFloat(m[1]);
     }
+    const pricePerHr  = parseFloat(document.getElementById('price_per_hr').value);
+    const feedbackEl  = document.getElementById('discount_feedback');
+    const discountRow = document.getElementById('discount_row');
+    if (!hours || !pricePerHr) return;
 
     const baseCost = hours * pricePerHr;
-
     if (!code) {
-        // No code entered, show base price
-        document.getElementById('price_output').textContent = `S$ ${baseCost.toFixed(2)}`;
-        document.getElementById('total_cost').value = baseCost.toFixed(2);
+        showBasePrice(hours, pricePerHr);
         feedbackEl.textContent = '';
-        feedbackEl.style.color = '';
         discountRow.style.display = 'none';
-        document.getElementById('discount_amount').textContent = '- S$ 0.00';
         return;
     }
 
-    // Validate code via AJAX
     fetch('<?php echo BASE; ?>/validate_discount.php', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: new URLSearchParams({
-            action: 'validate_discount',
-            referral_code: code,
-            hours: hours,
-            price_per_hr: pricePerHr
-        })
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action:'validate_discount', referral_code:code, hours, price_per_hr:pricePerHr })
     })
-    .then(res => res.json())
+    .then(r => r.json())
     .then(data => {
         document.getElementById('price_output').textContent = `S$ ${data.discountedCost.toFixed(2)}`;
-        document.getElementById('total_cost').value = data.discountedCost.toFixed(2);
-        
+        document.getElementById('total_cost').value         = data.discountedCost.toFixed(2);
         if (data.valid) {
-            feedbackEl.textContent = '✓ ' + data.message;
-            feedbackEl.style.color = '#34a853';
+            feedbackEl.textContent    = '✓ ' + data.message;
+            feedbackEl.style.color    = '#34a853';
             discountRow.style.display = 'flex';
-            const discountAmount = baseCost - data.discountedCost;
-            document.getElementById('discount_amount').textContent = `- S$ ${discountAmount.toFixed(2)}`;
+            document.getElementById('discount_amount').textContent = `- S$ ${(baseCost - data.discountedCost).toFixed(2)}`;
         } else {
-            feedbackEl.textContent = data.message;
-            feedbackEl.style.color = '#f94144';
+            feedbackEl.textContent    = data.message;
+            feedbackEl.style.color    = '#f94144';
             discountRow.style.display = 'none';
-            document.getElementById('discount_amount').textContent = '- S$ 0.00';
         }
     })
-    .catch(err => {
-        console.error('Discount validation error:', err);
-    });
+    .catch(console.error);
 }
 
-// Event listeners
 document.getElementById('start_time').addEventListener('change', calculatePrice);
 document.getElementById('end_time').addEventListener('change', calculatePrice);
 document.getElementById('referral_code').addEventListener('blur', applyReferralDiscount);
-document.getElementById('referral_code').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        applyReferralDiscount();
-    }
+document.getElementById('referral_code').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); applyReferralDiscount(); }
 });
 </script>
 
-<!-- ── JS ─────────────────────────────────────────────────── -->
+<!-- ── Calendar & booking logic JS ──────────────────────── -->
 <script>
 const BOOKED_RANGES = <?php echo $bookingsJson; ?>.map(b => ({
     start: new Date(b.start.replace(' ','T')),
     end  : new Date(b.end.replace(' ','T'))
 }));
 const PRICE_PER_HR = <?php echo (float)$car['price_per_hr']; ?>;
-const MIN_MINS     = 60;   // minimum booking duration
-const STEP_MINS    = 15;   // slot size
-const BUFFER_MINS  = 15;   // must book at least this far ahead
+const MIN_MINS     = 60;
+const STEP_MINS    = 15;
+const BUFFER_MINS  = 15;
 
-// ── Compute the earliest bookable start time ─────────────────
-// Logic: now + 15 min buffer, then round UP to next 15-min slot
-// e.g. now=12:37 → 12:37+15=12:52 → round up to 13:00
 function getMinStart() {
     const now = new Date();
     const withBuffer = new Date(now.getTime() + BUFFER_MINS * 60000);
@@ -518,34 +693,26 @@ function getMinStart() {
     return new Date(Math.ceil(withBuffer.getTime() / ms) * ms);
 }
 
-// ── Format a Date to datetime-local input value ──────────────
 function toInputVal(dt) {
-    const p = n => String(n).padStart(2, '0');
+    const p = n => String(n).padStart(2,'0');
     return `${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())}T${p(dt.getHours())}:${p(dt.getMinutes())}`;
 }
 
-// ── Snap a datetime-local string to nearest 15-min boundary ──
 function snapTo15(val) {
     if (!val) return val;
-    const dt = new Date(val);
-    const ms = STEP_MINS * 60000;
-    // round to nearest 15, not ceil — user may pick 12:45 exactly
-    const snapped = new Date(Math.round(dt.getTime() / ms) * ms);
-    return toInputVal(snapped);
+    const dt  = new Date(val);
+    const ms  = STEP_MINS * 60000;
+    return toInputVal(new Date(Math.round(dt.getTime() / ms) * ms));
 }
 
-// ── Set min attribute on start input dynamically ─────────────
 function refreshMinStart() {
-    const minStart = getMinStart();
-    document.getElementById('start_time').min = toInputVal(minStart);
+    document.getElementById('start_time').min = toInputVal(getMinStart());
 }
 
-// ── Overlaps check ───────────────────────────────────────────
 function overlaps(s, e) {
     return BOOKED_RANGES.some(r => s < r.end && e > r.start);
 }
 
-// ── Calendar ─────────────────────────────────────────────────
 const now = new Date();
 let calYear = now.getFullYear(), calMonth = now.getMonth();
 
@@ -553,9 +720,8 @@ function dayStatus(y, m, d) {
     const s = new Date(y,m,d,0,0), e = new Date(y,m,d,23,59);
     const hits = BOOKED_RANGES.filter(r => r.start < e && r.end > s);
     if (!hits.length) return 'free';
-    const booked = hits.reduce((acc, r) =>
-        acc + (Math.min(r.end, e) - Math.max(r.start, s)), 0);
-    return booked >= 23 * 3600 * 1000 ? 'full' : 'partial';
+    const booked = hits.reduce((acc,r) => acc + (Math.min(r.end,e) - Math.max(r.start,s)), 0);
+    return booked >= 23*3600*1000 ? 'full' : 'partial';
 }
 
 function renderCalendar() {
@@ -572,28 +738,25 @@ function renderCalendar() {
         grid.appendChild(el);
     });
 
-    const firstDow  = new Date(calYear, calMonth, 1).getDay();
-    const daysInMon = new Date(calYear, calMonth+1, 0).getDate();
+    const firstDow   = new Date(calYear, calMonth, 1).getDay();
+    const daysInMon  = new Date(calYear, calMonth+1, 0).getDate();
     const todayFloor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const minStart   = getMinStart();
 
-    const sv = document.getElementById('start_time').value;
-    const ev = document.getElementById('end_time').value;
-    const selS = sv ? new Date(sv) : null;
-    const selE = ev ? new Date(ev) : null;
+    const selS = document.getElementById('start_time').value ? new Date(document.getElementById('start_time').value) : null;
+    const selE = document.getElementById('end_time').value   ? new Date(document.getElementById('end_time').value)   : null;
 
     for (let i = 0; i < firstDow; i++) grid.appendChild(document.createElement('div'));
 
     for (let d = 1; d <= daysInMon; d++) {
-        const el     = document.createElement('div');
-        const dt     = new Date(calYear, calMonth, d);
-        const isPast = dt < todayFloor;
+        const el      = document.createElement('div');
+        const dt      = new Date(calYear, calMonth, d);
+        const isPast  = dt < todayFloor;
         const isToday = dt.toDateString() === todayFloor.toDateString();
-        const status = dayStatus(calYear, calMonth, d);
+        const status  = dayStatus(calYear, calMonth, d);
 
         el.textContent = d;
         el.style.cssText = 'aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12px;border-radius:6px;position:relative;transition:background .1s;';
-
         if (isToday) el.style.outline = '1px solid var(--text-muted)';
 
         const inSel = selS && selE
@@ -609,7 +772,7 @@ function renderCalendar() {
             el.style.cursor = 'not-allowed'; el.title = 'Fully booked';
         } else if (status === 'partial') {
             el.style.background = '#2a1f00'; el.style.color = '#f0a030';
-            el.style.cursor = 'pointer'; el.title = 'Some slots available — click to pick';
+            el.style.cursor = 'pointer'; el.title = 'Some slots available';
         } else {
             el.style.color = 'var(--text)'; el.style.cursor = 'pointer';
             el.onmouseenter = () => { if (!inSel) el.style.background = 'var(--bg-raised)'; };
@@ -618,19 +781,12 @@ function renderCalendar() {
 
         if (!isPast && status !== 'full') {
             el.onclick = () => {
-                const p = n => String(n).padStart(2,'0');
+                const p    = n => String(n).padStart(2,'0');
                 const base = `${calYear}-${p(calMonth+1)}-${p(d)}`;
-
-                // If clicking today, use minStart time; otherwise default to 09:00
                 let startHH = '09', startMM = '00';
-                if (isToday) {
-                    startHH = p(minStart.getHours());
-                    startMM = p(minStart.getMinutes());
-                }
+                if (isToday) { startHH = p(minStart.getHours()); startMM = p(minStart.getMinutes()); }
                 const startVal = `${base}T${startHH}:${startMM}`;
-                const startDt  = new Date(startVal);
-                const endDt    = new Date(startDt.getTime() + MIN_MINS * 60000);
-
+                const endDt    = new Date(new Date(startVal).getTime() + MIN_MINS * 60000);
                 document.getElementById('start_time').value = startVal;
                 document.getElementById('end_time').value   = toInputVal(endDt);
                 onTimeChange();
@@ -641,144 +797,115 @@ function renderCalendar() {
     }
 }
 
-function prevMonth() {
-    if (calMonth === 0) { calMonth = 11; calYear--; } else calMonth--;
-    renderCalendar();
-}
-function nextMonth() {
-    if (calMonth === 11) { calMonth = 0; calYear++; } else calMonth++;
-    renderCalendar();
-}
+function prevMonth() { if (calMonth===0){calMonth=11;calYear--;}else calMonth--; renderCalendar(); }
+function nextMonth() { if (calMonth===11){calMonth=0;calYear++;}else calMonth++; renderCalendar(); }
 
-// ── Next Available Slot ──────────────────────────────────────
 function jumpToNextSlot() {
-    let candidate = getMinStart(); // already rounded to next 15-min slot
-    const limit   = new Date(Date.now() + 30 * 24 * 3600 * 1000);
+    let candidate = getMinStart();
+    const limit   = new Date(Date.now() + 30*24*3600*1000);
     while (candidate < limit) {
-        const end = new Date(candidate.getTime() + MIN_MINS * 60000);
+        const end = new Date(candidate.getTime() + MIN_MINS*60000);
         if (!overlaps(candidate, end)) {
             document.getElementById('start_time').value = toInputVal(candidate);
             document.getElementById('end_time').value   = toInputVal(end);
-            calYear  = candidate.getFullYear();
-            calMonth = candidate.getMonth();
-            onTimeChange();
-            renderCalendar();
-            document.getElementById('start_time').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            calYear = candidate.getFullYear(); calMonth = candidate.getMonth();
+            onTimeChange(); renderCalendar();
+            document.getElementById('start_time').scrollIntoView({ behavior:'smooth', block:'center' });
             return;
         }
-        candidate = new Date(candidate.getTime() + STEP_MINS * 60000);
+        candidate = new Date(candidate.getTime() + STEP_MINS*60000);
     }
     alert('No available slots found in the next 30 days.');
 }
 
-// ── Handle input change — snap + validate ────────────────────
 function onTimeChange() {
-    // Snap both inputs to 15-min boundaries
     const startEl = document.getElementById('start_time');
     const endEl   = document.getElementById('end_time');
     if (startEl.value) startEl.value = snapTo15(startEl.value);
     if (endEl.value)   endEl.value   = snapTo15(endEl.value);
 
-    const sv = startEl.value;
-    const ev = endEl.value;
-    const alertEl = document.getElementById('conflictAlert');
-    const btn     = document.getElementById('confirmBtn');
-    const hOut    = document.getElementById('hours_output');
-    const pOut    = document.getElementById('price_output');
-
-    const resetBtn = () => {
-        btn.innerHTML = '<i class="bi bi-calendar-check me-2"></i>Confirm Booking';
-    };
+    const sv       = startEl.value;
+    const ev       = endEl.value;
+    const alertEl  = document.getElementById('conflictAlert');
+    const btn      = document.getElementById('confirmBtn');
+    const hOut     = document.getElementById('hours_output');
+    const pOut     = document.getElementById('price_output');
+    const resetBtn = () => { btn.innerHTML = '<i class="bi bi-calendar-check me-2"></i>Confirm Booking'; };
 
     if (!sv || !ev) {
         hOut.textContent = '–'; pOut.textContent = 'S$ 0.00';
         document.getElementById('total_cost').value = 0;
-        alertEl.style.display = 'none';
-        btn.disabled = false; resetBtn();
-        return;
+        alertEl.style.display = 'none'; btn.disabled = false; resetBtn(); return;
     }
 
     const s = new Date(sv), e = new Date(ev);
     const minStart = getMinStart();
     const diffMins = (e - s) / 60000;
 
-    // Check 15-min ahead rule
     if (s < minStart) {
-        hOut.textContent = 'Too soon';
-        pOut.textContent = 'S$ 0.00';
+        hOut.textContent = 'Too soon'; pOut.textContent = 'S$ 0.00';
         document.getElementById('total_cost').value = 0;
-        alertEl.style.display = 'none';
-        btn.disabled = true;
+        alertEl.style.display = 'none'; btn.disabled = true;
         btn.innerHTML = `<i class="bi bi-clock me-2"></i>Earliest pickup: ${toInputVal(minStart).split('T')[1]}`;
         return;
     }
-
     if (e <= s) {
         hOut.textContent = 'Invalid'; pOut.textContent = 'S$ 0.00';
         alertEl.style.display = 'none'; btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Return must be after pickup';
-        return;
+        btn.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Return must be after pickup'; return;
     }
-
     if (diffMins < MIN_MINS) {
         hOut.textContent = diffMins + ' mins (too short)'; pOut.textContent = 'S$ 0.00';
         document.getElementById('total_cost').value = 0;
         alertEl.style.display = 'none'; btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Minimum 30 minutes required';
-        return;
+        btn.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Minimum 1 hour required'; return;
     }
-
     if (overlaps(s, e)) {
-        alertEl.style.display = 'block';
-        hOut.textContent = '–'; pOut.textContent = 'S$ 0.00';
-        document.getElementById('total_cost').value = 0;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-x-circle me-2"></i>Time Conflict — Choose Different Times';
-        return;
+        alertEl.style.display = 'block'; hOut.textContent = '–'; pOut.textContent = 'S$ 0.00';
+        document.getElementById('total_cost').value = 0; btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-x-circle me-2"></i>Time Conflict — Choose Different Times'; return;
     }
 
-    // All good
     alertEl.style.display = 'none';
     const hrs  = diffMins / 60;
     const cost = Math.round(hrs * PRICE_PER_HR * 100) / 100;
-    const hStr = hrs >= 1
-        ? (Number.isInteger(hrs) ? hrs + ' hr' + (hrs > 1 ? 's' : '') : hrs.toFixed(1) + ' hrs')
-        : diffMins + ' mins';
-
+    const hStr = hrs >= 1 ? (Number.isInteger(hrs) ? hrs+' hr'+(hrs>1?'s':'') : hrs.toFixed(1)+' hrs') : diffMins+' mins';
     hOut.textContent = hStr;
+    hOut.dataset.hours = hrs;
     pOut.textContent = 'S$ ' + cost.toFixed(2);
     document.getElementById('total_cost').value = cost;
     btn.disabled = false; resetBtn();
+
+    // Re-apply referral if code already entered
+    const code = document.getElementById('referral_code').value.trim();
+    if (code) applyReferralDiscount();
+
     renderCalendar();
 }
 
-// ── Form validation before submit ────────────────────────────
 function validateBookingForm() {
     const sv = document.getElementById('start_time').value;
     const ev = document.getElementById('end_time').value;
     if (!sv || !ev) { alert('Please select both times.'); return false; }
     const s = new Date(sv), e = new Date(ev);
     if (s < getMinStart()) { alert('Pickup must be at least 15 minutes from now.'); return false; }
-    if ((e - s) / 60000 < MIN_MINS) { alert('Minimum rental is 30 minutes.'); return false; }
-    if (overlaps(s, e)) { alert('This slot is already booked. Please choose different times.'); return false; }
+    if ((e-s)/60000 < MIN_MINS) { alert('Minimum rental is 1 hour.'); return false; }
+    if (overlaps(s,e)) { alert('This slot is already booked.'); return false; }
     return true;
 }
 
-// ── Wire up inputs ────────────────────────────────────────────
 document.getElementById('start_time').addEventListener('change', onTimeChange);
-document.getElementById('end_time').addEventListener('change', onTimeChange);
-document.getElementById('start_time').addEventListener('blur', onTimeChange);
-document.getElementById('end_time').addEventListener('blur', onTimeChange);
+document.getElementById('end_time').addEventListener('change',   onTimeChange);
+document.getElementById('start_time').addEventListener('blur',   onTimeChange);
+document.getElementById('end_time').addEventListener('blur',     onTimeChange);
 
-// Refresh min every minute so it stays current
 refreshMinStart();
 setInterval(refreshMinStart, 60000);
-
-// Init calendar
 renderCalendar();
 </script>
 
 <?php if ($hasCoords): ?>
+<!-- ── Google Maps ─────────────────────────────────────────── -->
 <script>
 const PICKUP_LAT   = <?php echo $pickupLat; ?>;
 const PICKUP_LNG   = <?php echo $pickupLng; ?>;
@@ -787,31 +914,43 @@ const PICKUP_LABEL = <?php echo json_encode($car['location']); ?>;
 function initPickupMap() {
     const pos = { lat: PICKUP_LAT, lng: PICKUP_LNG };
     const map = new google.maps.Map(document.getElementById('pickupMap'), {
-        center: pos, zoom: 15,
-        mapTypeControl: false,
+        // Offset centre slightly south so marker sits lower in frame
+        center           : { lat: PICKUP_LAT - 0.003, lng: PICKUP_LNG },
+        zoom             : 15,
+        mapTypeControl   : false,
         fullscreenControl: false,
-        streetViewControl: true,
-        gestureHandling: 'cooperative',
-        styles: [{ featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] }]
+        streetViewControl: false,
+        // Prevents map from hijacking page scroll
+        gestureHandling  : 'cooperative',
+        styles: [{ featureType:'poi', elementType:'labels', stylers:[{ visibility:'off' }] }]
     });
+
     const marker = new google.maps.Marker({
-        position: pos, map,
-        title: PICKUP_LABEL,
+        position : pos,
+        map,
+        title    : PICKUP_LABEL,
         animation: google.maps.Animation.DROP,
         icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 12, fillColor: '#e63946', fillOpacity: 1,
-            strokeColor: '#fff', strokeWeight: 3
+            path        : google.maps.SymbolPath.CIRCLE,
+            scale       : 12,
+            fillColor   : '#e63946',
+            fillOpacity : 1,
+            strokeColor : '#ffffff',
+            strokeWeight: 3
         }
     });
+
     const iw = new google.maps.InfoWindow({
-        content: `<div style="font-family:sans-serif;padding:4px 0;">
-            <div style="font-weight:600;font-size:13px;margin-bottom:3px;"><?php echo h($car['make'].' '.$car['model']); ?></div>
+        content: `<div style="font-family:sans-serif;padding:4px 2px;">
+            <div style="font-weight:600;font-size:13px;margin-bottom:3px;">
+                <?php echo h($car['make'].' '.$car['model']); ?>
+            </div>
             <div style="font-size:12px;color:#555;">${PICKUP_LABEL}</div>
         </div>`
     });
+
+    // Only open InfoWindow on click — never auto-open (auto-open bleeds outside map)
     marker.addListener('click', () => iw.open(map, marker));
-    iw.open(map, marker);
 }
 </script>
 <script async defer
