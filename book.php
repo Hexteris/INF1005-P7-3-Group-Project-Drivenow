@@ -502,8 +502,7 @@ require_once 'includes/header.php';
                 <!-- Hero image / icon -->
                 <div class="bp-hero">
                     <?php if (!empty($car['image_url'])): ?>
-                        <img src="<?php echo h($car['image_url']); ?>"
-                             alt="<?php echo h($car['make'].' '.$car['model']); ?>">
+                        <img src="<?php echo BASE . '/uploads/cars/' . h($car['image_url']); ?>" alt="...">
                     <?php else: ?>
                         <div class="bp-hero-icon"><?php echo $categoryIcons[$car['category']] ?? '🚗'; ?></div>
                     <?php endif; ?>
