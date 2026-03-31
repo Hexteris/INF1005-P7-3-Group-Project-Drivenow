@@ -22,11 +22,14 @@ function validateRegisterForm() {
     if (phone && phone.value.trim() !== '' && !/^\+?[\d\s\-]{8,15}$/.test(phone.value.trim())) {
         showError('phone', 'Please enter a valid phone number.'); valid = false;
     }
-    if (pass && pass.value.length < 8) {
-        showError('password', 'Password must be at least 8 characters.'); valid = false;
+    if (pass && (pass.value.length < 8 || !/[!@#$%^&*(),.?":{}|<>_\-]/.test(pass.value))) {
+        showError('password', 'Password must be at least 8 characters and include at least 1 special character.'); valid = false;
     }
     if (pass && conf && pass.value !== conf.value) {
         showError('confirm_password', 'Passwords do not match.'); valid = false;
+    }
+    if (lic && lic.value.trim() !== '' && !/^\d{9}[A-Za-z]$/.test(lic.value.trim())) {
+        showError('licence_no', 'Licence must be in format 123456789K (9 digits followed by 1 letter).'); valid = false;
     }
 
     return valid;

@@ -78,11 +78,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors['full_name'] = 'Full name must be at least 2 characters.';
         if (!filter_var($email, FILTER_VALIDATE_EMAIL))
             $errors['email'] = 'Please enter a valid email address.';
-        if (strlen($password) < 8)
-            $errors['password'] = 'Password must be at least 8 characters.';
+        if (strlen($password) < 8 || !preg_match('/[!@#$%^&*(),.?":{}|<>_\-]/', $password))
+            $errors['password'] = 'Password must be at least 8 characters and include at least 1 special character (e.g. @, #, !).';
         if ($password !== $confirm)
             $errors['confirm_password'] = 'Passwords do not match.';
-
+        if (!empty($licence_no) && !preg_match('/^\d{9}[A-Za-z]$/', $licence_no))
+            $errors['licence_no'] = 'Licence must be in format 123456789K (9 digits followed by 1 letter).';
         if (empty($errors)) {
             $stmt = $conn->prepare("SELECT member_id FROM members WHERE email = ?");
             $stmt->bind_param("s", $email);
@@ -172,15 +173,33 @@ require_once 'includes/header.php';
 
             <div class="mb-3">
                 <label class="form-label" for="licence_no">Driving Licence No.</label>
-                <input type="text" class="form-control"
+                <input type="text" class="form-control <?php echo isset($errors['licence_no']) ? 'is-invalid' : ''; ?>"
                     id="licence_no" name="licence_no" value="<?php echo h($_POST['licence_no'] ?? ''); ?>"
-                    placeholder="S1234567A">
+                    placeholder="123456789K" maxlength="10"
+                    oninput="validateLicence(this)">
+                <div id="licence_hint" style="margin-top:.4rem;">
+                    <span id="lhint_format" class="req-hint">
+                        <i class="bi bi-circle req-icon" style="font-size:8px;"></i> Format: 9 digits + 1 letter (e.g. 123456789K)
+                    </span>
+                </div>
+                <?php if (isset($errors['licence_no'])): ?>
+                    <div class="form-error"><?php echo h($errors['licence_no']); ?></div>
+                <?php endif; ?>
             </div>
 
             <div class="mb-3">
                 <label class="form-label" for="password">Password *</label>
                 <input type="password" class="form-control <?php echo isset($errors['password']) ? 'is-invalid' : ''; ?>"
-                    id="password" name="password" placeholder="Min. 8 characters" required>
+                    id="password" name="password" placeholder="Min. 8 characters" required
+                    oninput="validatePassword(this)">
+                <div id="pw_requirements" style="margin-top:.5rem;display:flex;flex-direction:column;gap:3px;">
+                    <span id="req_length" class="req-hint">
+                        <i class="bi bi-circle req-icon" style="font-size:8px;"></i> At least 8 characters
+                    </span>
+                    <span id="req_special" class="req-hint">
+                        <i class="bi bi-circle req-icon" style="font-size:8px;"></i> At least 1 special character (e.g. @, #, !)
+                    </span>
+                </div>
                 <?php if (isset($errors['password'])): ?>
                     <div class="form-error"><?php echo h($errors['password']); ?></div>
                 <?php endif; ?>
@@ -211,7 +230,70 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+<style>
+.req-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .78rem;
+    color: var(--text-muted);
+    transition: color .2s;
+}
+.req-hint .req-icon { transition: all .2s; }
+.req-hint.req-pass {
+    color: #34a853;
+}
+.req-hint.req-pass .req-icon::before {
+    content: "\f26a"; /* bi-check-circle-fill */
+    font-family: "bootstrap-icons";
+    color: #34a853;
+}
+.req-hint.req-fail {
+    color: #f94144;
+}
+.req-hint.req-fail .req-icon::before {
+    content: "\f623"; /* bi-x-circle */
+    font-family: "bootstrap-icons";
+    color: #f94144;
+}
+</style>
+
 <script>
+function validatePassword(input) {
+    const val = input.value;
+    const lenOk     = val.length >= 8;
+    const specialOk = /[!@#$%^&*(),.?":{}|<>_\-]/.test(val);
+
+    const reqLen     = document.getElementById('req_length');
+    const reqSpecial = document.getElementById('req_special');
+
+    setReq(reqLen,     lenOk);
+    setReq(reqSpecial, specialOk);
+}
+
+function validateLicence(input) {
+    const val    = input.value.trim().toUpperCase();
+    input.value  = val;
+    const ok = /^\d{9}[A-Za-z]$/.test(val);
+    const hint   = document.getElementById('lhint_format');
+    if (val.length === 0) {
+        hint.className = 'req-hint';
+    } else {
+        setReq(hint, ok);
+    }
+}
+
+function setReq(el, pass) {
+    if (!el) return;
+    el.classList.remove('req-pass', 'req-fail');
+    el.classList.add(pass ? 'req-pass' : 'req-fail');
+    const icon = el.querySelector('.req-icon');
+    if (icon) {
+        icon.className = 'req-icon bi ' + (pass ? 'bi-check-circle-fill' : 'bi-x-circle');
+        icon.style.fontSize = '11px';
+    }
+}
+
 function validateRegisterFormFull() {
     // Step 1: Validate fields first
     if (!validateRegisterForm()) {
