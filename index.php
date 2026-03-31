@@ -90,7 +90,7 @@ $popular_cars = $conn->query("
                 <div class="how-card">
                     <div class="how-num">01</div>
                     <div class="how-icon"><i class="bi bi-person-badge"></i></div>
-                    <h5 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.04em;">Register & Verify</h5>
+                    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.04em;">Register & Verify</h3>
                     <p class="text-muted-dn">Sign up with your driving licence number. Takes less than 2 minutes.</p>
                 </div>
             </div>
@@ -98,7 +98,7 @@ $popular_cars = $conn->query("
                 <div class="how-card">
                     <div class="how-num">02</div>
                     <div class="how-icon"><i class="bi bi-calendar2-check"></i></div>
-                    <h5 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.04em;">Pick & Book</h5>
+                    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.04em;">Pick & Book</h3>
                     <p class="text-muted-dn">Choose from our fleet, select your pickup time and duration, confirm instantly.</p>
                 </div>
             </div>
@@ -106,7 +106,7 @@ $popular_cars = $conn->query("
                 <div class="how-card">
                     <div class="how-num">03</div>
                     <div class="how-icon"><i class="bi bi-car-front"></i></div>
-                    <h5 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.04em;">Unlock & Drive</h5>
+                    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.04em;">Unlock & Drive</h3>
                     <p class="text-muted-dn">Head to the car park, unlock via the app, and you're off. Return it when done.</p>
                 </div>
             </div>
@@ -200,7 +200,7 @@ $popular_cars = $conn->query("
                     <div class="car-card-body">
                         <span class=
                         "car-category-badge"><?php echo h($car['category']); ?></span>
-                        <h5 class="car-title"><?php echo h($car['make'].' '.$car['model']); ?></h5>
+                        <h3 class="car-title"><?php echo h($car['make'].' '.$car['model']); ?></h3>
                         <div class="car-price">
                             S$<?php echo number_format($car['price_per_hr'], 2); ?>
                             <span class="car-price-unit">/ hour</span>
