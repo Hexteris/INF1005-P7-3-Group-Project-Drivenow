@@ -1,6 +1,7 @@
 # Sensitive config - never commit
 db-config.ini
 db-config.ini.template
+gen-hash.php
 
 # VS Code SFTP credentials
 .vscode/sftp.json
