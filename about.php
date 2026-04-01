@@ -124,22 +124,22 @@ require_once 'includes/header.php';
         <div class="row g-0 how-steps">
             <div class="col-md-3 how-step">
                 <div class="how-step-num">01</div>
-                <h4 class="how-step-title">Create an Account</h4>
+                <h3 class="how-step-title">Create an Account</h3>
                 <p class="how-step-body">Register in minutes with your name, email, and contact details. No lengthy forms.</p>
             </div>
             <div class="col-md-3 how-step">
                 <div class="how-step-num">02</div>
-                <h4 class="how-step-title">Browse the Fleet</h4>
+                <h3 class="how-step-title">Browse the Fleet</h3>
                 <p class="how-step-body">Filter by car type, seats, or transmission. Every listing shows live availability and hourly pricing.</p>
             </div>
             <div class="col-md-3 how-step">
                 <div class="how-step-num">03</div>
-                <h4 class="how-step-title">Book &amp; Pay</h4>
+                <h3 class="how-step-title">Book &amp; Pay</h3>
                 <p class="how-step-body">Pick your pickup time, confirm your duration, and pay securely. Your booking is confirmed instantly.</p>
             </div>
             <div class="col-md-3 how-step">
                 <div class="how-step-num">04</div>
-                <h4 class="how-step-title">Drive &amp; Review</h4>
+                <h3 class="how-step-title">Drive &amp; Review</h3>
                 <p class="how-step-body">Collect your car, enjoy the drive, and leave a review when you're done. It's that simple.</p>
             </div>
         </div>
@@ -157,6 +157,7 @@ require_once 'includes/header.php';
             <a href="<?php echo BASE; ?>cars.php" class="btn btn-accent btn-lg">Browse Cars</a>
             <a href="<?php echo BASE; ?>register.php" class="btn btn-outline-light btn-lg">Create Account</a>
         </div>
+    </div>
 </section>
 
 </main>
