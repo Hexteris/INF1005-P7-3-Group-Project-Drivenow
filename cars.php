@@ -4,24 +4,7 @@ require_once 'includes/header.php';
 require_once 'includes/db-connect.php';
 require_once 'includes/auth.php';
 
-// Load Google Maps key from same db-config.ini the project already uses
-if (!defined('GMAPS_KEY')) {
-    $possiblePaths = [
-        '/var/www/private/db-config.ini',
-        'C:/xampp/drivenow-private/db-config.ini',
-        getenv('USERPROFILE') . '/Herd/drivenow-private/db-config.ini',
-        dirname(__DIR__) . '/../../drivenow-private/db-config.ini',
-    ];
-    $gmapsKey = '';
-    foreach ($possiblePaths as $path) {
-        if ($path && file_exists($path)) {
-            $ini = parse_ini_file($path);
-            $gmapsKey = $ini['gmaps_key'] ?? '';
-            break;
-        }
-    }
-    define('GMAPS_KEY', $gmapsKey);
-}
+define('GMAPS_KEY', $_ENV['GMAPS_KEY'] ?? '');
 
 // Filter inputs
 $category  = $_GET['category']  ?? '';
@@ -162,7 +145,7 @@ $mapJson = json_encode(array_map(fn($c) => [
                          style="cursor:pointer;">
                         <div class="car-card-img">
                             <?php if (!empty($car['image_url'])): ?>
-                                <img src="<?php echo h($car['image_url']); ?>" alt="<?php echo h($car['make'].' '.$car['model']); ?>">
+                                <img src="<?php echo BASE . '/uploads/cars/' . h($car['image_url']); ?>" alt="<?php echo h($car['make'].' '.$car['model']); ?>">
                             <?php else: ?>
                                 <?php echo $categoryIcons[$car['category']] ?? '🚗'; ?>
                             <?php endif; ?>
