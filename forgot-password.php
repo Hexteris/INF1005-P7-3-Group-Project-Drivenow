@@ -1,70 +1,103 @@
 <?php
 $pageTitle = 'Forgot Password';
 if (session_status() === PHP_SESSION_NONE) session_start();
+require_once 'includes/config.php';
 require_once 'includes/db-connect.php';
-require_once 'includes/header.php';
+require_once 'includes/security.php';
 require_once 'includes/mailer.php';
 
 $error = '';
 $success = false;
+$debug_id = substr(sha1(uniqid('forgot-password', true)), 0, 8);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
-    
+
     if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Please enter a valid email address.';
     } else {
-        // Check if email exists in database
+        $success = true;
+        error_log("[forgot-password][$debug_id] Processing reset request for {$email}");
+
         $stmt = $conn->prepare("SELECT member_id, full_name FROM members WHERE email = ?");
-        $stmt->bind_param('s', $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-        $stmt->close();
-        
-        if ($row) {
-            // Generate reset token
-            $token = generateResetToken();
-            
-            // Store token in database
-            $expires_minutes = 60;
-            if (storeResetToken($conn, $email, $token, $expires_minutes)) {
-                // Send reset email
-                $reset_link = BASE . "/reset-password.php?token=" . urlencode($token);
-                
-                $cfg = loadMailConfig();
-
-                $subject = 'DriveNow Password Reset Request';
-                $body = "Hi " . $row['full_name'] . ",\r\n\r\n"
-                    . "We received a request to reset your password. Please click the link below to set a new password:\r\n\r\n"
-                    . $reset_link . "\r\n\r\n"
-                    . "This link expires in 60 minutes.\r\n\r\n"
-                    . "If you did not request this, please ignore this email.\r\n\r\n"
-                    . "DriveNow Team";
-
-                // Use your existing SMTP function
-                $sent = sendViaSmtp(
-                    $cfg['smtp_host'], 
-                    (int)$cfg['smtp_port'], 
-                    $cfg['smtp_user'], 
-                    $cfg['smtp_pass'], 
-                    $cfg['smtp_user'], 
-                    $email, 
-                    $row['full_name'], 
-                    $subject, 
-                    $body
-                );
-
-                $success = true; // Set to true regardless of $sent for security
-                
-            }       
+        if (!$stmt) {
+            error_log("[forgot-password][$debug_id] prepare failed: " . $conn->error);
         } else {
-            // Email not found - don't reveal for security
-            $success = true;
+            $statement_closed = false;
+            $stmt->bind_param('s', $email);
+
+            if (!$stmt->execute()) {
+                error_log("[forgot-password][$debug_id] execute failed: " . $stmt->error);
+            } else {
+                $stmt->bind_result($member_id, $full_name);
+
+                if ($stmt->fetch()) {
+                    $stmt->close();
+                    $statement_closed = true;
+
+                    $token = generateResetToken();
+                    $expires_minutes = 60;
+
+                    if ($token === '') {
+                        error_log("[forgot-password][$debug_id] token generation returned empty value for {$email}");
+                    } elseif (!storeResetToken($conn, $email, $token, $expires_minutes)) {
+                        error_log("[forgot-password][$debug_id] storeResetToken failed for {$email}");
+                    } else {
+                        $reset_link = BASE . "/reset-password.php?token=" . urlencode($token);
+                        $cfg = loadMailConfig();
+
+                        $smtp_host = trim($cfg['smtp_host'] ?? '');
+                        $smtp_user = trim($cfg['smtp_user'] ?? '');
+                        $smtp_pass = (string)($cfg['smtp_pass'] ?? '');
+                        $smtp_port = (int)($cfg['smtp_port'] ?? 587);
+
+                        if ($smtp_host === '' || $smtp_user === '' || $smtp_pass === '' || $smtp_port <= 0) {
+                            error_log("[forgot-password][$debug_id] SMTP config missing or invalid for {$email}");
+                            clearResetToken($conn, $email);
+                        } else {
+                            $subject = 'DriveNow Password Reset Request';
+                            $body = "Hi " . ($full_name ?: 'there') . ",\r\n\r\n"
+                                . "We received a request to reset your password. Please click the link below to set a new password:\r\n\r\n"
+                                . $reset_link . "\r\n\r\n"
+                                . "This link expires in {$expires_minutes} minutes.\r\n\r\n"
+                                . "If you did not request this, please ignore this email.\r\n\r\n"
+                                . "DriveNow Team";
+
+                            $sent = sendViaSmtp(
+                                $smtp_host,
+                                $smtp_port,
+                                $smtp_user,
+                                $smtp_pass,
+                                $smtp_user,
+                                $email,
+                                $full_name ?: 'Member',
+                                $subject,
+                                $body
+                            );
+
+                            if ($sent) {
+                                error_log("[forgot-password][$debug_id] Reset email sent to {$email}");
+                            } else {
+                                error_log("[forgot-password][$debug_id] sendViaSmtp failed for {$email}");
+                                clearResetToken($conn, $email);
+                            }
+                        }
+                    }
+                } else {
+                    $stmt->close();
+                    $statement_closed = true;
+                    error_log("[forgot-password][$debug_id] No account matched {$email}");
+                }
+            }
+
+            if (!$statement_closed) {
+                $stmt->close();
+            }
         }
     }
 }
 
+require_once 'includes/header.php';
 ?>
 
 <main id="main-content">

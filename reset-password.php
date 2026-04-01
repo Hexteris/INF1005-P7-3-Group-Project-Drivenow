@@ -12,22 +12,28 @@ $token_valid = false;
 $reset_email = '';
 $password_error = '';
 $confirm_error = '';
+$debug_id = substr(sha1(uniqid('reset-password', true)), 0, 8);
 
 // Verify token if provided
 if (!empty($token)) {
+    error_log("[reset-password][$debug_id] Verifying reset token");
     $token_data = verifyResetToken($conn, $token);
     if ($token_data) {
         $token_valid = true;
         $reset_email = $token_data['email'];
+        error_log("[reset-password][$debug_id] Reset token accepted for {$reset_email}");
     } else {
+        error_log("[reset-password][$debug_id] Reset token invalid or expired");
         $error = 'This password reset link is invalid or has expired.';
     }
 } else {
+    error_log("[reset-password][$debug_id] No reset token provided");
     $error = 'No reset token provided.';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$token_valid) {
+        error_log("[reset-password][$debug_id] POST rejected because token is invalid");
         $error = 'This password reset link is invalid or has expired.';
     } else {
         $password = $_POST['password'] ?? '';
@@ -43,9 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Update password in database
             if (updatePasswordWithToken($conn, $token, $password)) {
+                error_log("[reset-password][$debug_id] Password updated for {$reset_email}");
                 $success = true;
                 $token_valid = false; // Prevent resubmission
             } else {
+                error_log("[reset-password][$debug_id] updatePasswordWithToken failed for {$reset_email}");
                 $password_error = 'Failed to reset password. Please try again.';
             }
         }
@@ -117,7 +125,8 @@ require_once 'includes/header.php';
                     </div>
                     <?php if (!empty($password_error)): ?>
                         <div class="text-danger mt-1" style="font-size: 0.85rem;">
-                        <?php echo h($password_error); ?>
+                            <?php echo h($password_error); ?>
+                        </div>
                     <?php endif; ?>
                     <small class="text-muted-dn d-block mt-2" style="font-size: 0.8rem;">
                         <ul style="margin: 8px 0; padding-left: 20px;">
@@ -145,7 +154,8 @@ require_once 'includes/header.php';
                     </div>
                     <?php if (!empty($confirm_error)): ?>
                         <div class="text-danger mt-1" style="font-size: 0.85rem; padding-bottom:5px;">
-                        <?php echo h($confirm_error); ?>
+                            <?php echo h($confirm_error); ?>
+                        </div>
                     <?php endif; ?>
                 </div>
 

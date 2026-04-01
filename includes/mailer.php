@@ -1,4 +1,9 @@
 <?php
+function sanitizeMailHeader(string $value): string
+{
+    return trim(str_replace(["\r", "\n"], '', $value));
+}
+
 function sendWelcomeEmail(string $toEmail, string $toName): bool
 {
     $cfg = loadMailConfig();
@@ -23,8 +28,21 @@ function sendViaSmtp(string $host, int $port, string $user, string $pass,
                       string $from, string $toEmail, string $toName,
                       string $subject, string $body): bool
 {
+    $host = trim($host);
+    $user = trim($user);
+    $from = sanitizeMailHeader($from);
+    $toEmail = sanitizeMailHeader($toEmail);
+    $toName = sanitizeMailHeader($toName);
+    $subject = sanitizeMailHeader($subject);
+
+    if ($host === '' || $user === '' || $pass === '' || $from === '' || $toEmail === '' || $port <= 0) {
+        error_log("SMTP: invalid send request. host={$host} port={$port} user={$user} from={$from} to={$toEmail}");
+        return false;
+    }
+
+    $transport = ($port === 465) ? "ssl://{$host}" : "tcp://{$host}";
     $errno = 0; $errstr = '';
-    $smtp = @fsockopen("tcp://{$host}", $port, $errno, $errstr, 15);
+    $smtp = @fsockopen($transport, $port, $errno, $errstr, 15);
     if (!$smtp) {
         error_log("SMTP fsockopen failed [{$errno}]: {$errstr}");
         return false;
@@ -47,19 +65,50 @@ function sendViaSmtp(string $host, int $port, string $user, string $pass,
     $r = $read(); // 220 greeting
     if (strpos($r, '220') === false) { error_log("SMTP no greeting: {$r}"); fclose($smtp); return false; }
 
-    $send("EHLO localhost"); $read();
-    $send("STARTTLS"); $r = $read();
-    if (strpos($r, '220') === false) { error_log("STARTTLS failed: {$r}"); fclose($smtp); return false; }
-
-    if (!stream_socket_enable_crypto($smtp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-        error_log("SMTP TLS handshake failed");
+    $send("EHLO localhost");
+    $r = $read();
+    if (strpos($r, '250') === false) {
+        error_log("SMTP EHLO failed: {$r}");
         fclose($smtp);
         return false;
     }
 
-    $send("EHLO localhost"); $read();
-    $send("AUTH LOGIN"); $read();
-    $send(base64_encode($user)); $read();
+    if ($port !== 465) {
+        $send("STARTTLS");
+        $r = $read();
+        if (strpos($r, '220') === false) { error_log("STARTTLS failed: {$r}"); fclose($smtp); return false; }
+
+        if (!stream_socket_enable_crypto($smtp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+            error_log("SMTP TLS handshake failed");
+            fclose($smtp);
+            return false;
+        }
+
+        $send("EHLO localhost");
+        $r = $read();
+        if (strpos($r, '250') === false) {
+            error_log("SMTP EHLO after STARTTLS failed: {$r}");
+            fclose($smtp);
+            return false;
+        }
+    }
+
+    $send("AUTH LOGIN");
+    $r = $read();
+    if (strpos($r, '334') === false) {
+        error_log("SMTP AUTH LOGIN rejected: {$r}");
+        fclose($smtp);
+        return false;
+    }
+
+    $send(base64_encode($user));
+    $r = $read();
+    if (strpos($r, '334') === false) {
+        error_log("SMTP username rejected: {$r}");
+        fclose($smtp);
+        return false;
+    }
+
     $send(base64_encode($pass));
     $r = $read();
     if (strpos($r, '235') === false) {
@@ -68,9 +117,29 @@ function sendViaSmtp(string $host, int $port, string $user, string $pass,
         return false;
     }
 
-    $send("MAIL FROM:<{$from}>"); $read();
-    $send("RCPT TO:<{$toEmail}>"); $read();
-    $send("DATA"); $read();
+    $send("MAIL FROM:<{$from}>");
+    $r = $read();
+    if (strpos($r, '250') === false) {
+        error_log("SMTP MAIL FROM rejected: {$r}");
+        fclose($smtp);
+        return false;
+    }
+
+    $send("RCPT TO:<{$toEmail}>");
+    $r = $read();
+    if (strpos($r, '250') === false && strpos($r, '251') === false) {
+        error_log("SMTP RCPT TO rejected: {$r}");
+        fclose($smtp);
+        return false;
+    }
+
+    $send("DATA");
+    $r = $read();
+    if (strpos($r, '354') === false) {
+        error_log("SMTP DATA rejected: {$r}");
+        fclose($smtp);
+        return false;
+    }
 
     $send("From: DriveNow <{$from}>");
     $send("To: {$toName} <{$toEmail}>");
@@ -78,7 +147,7 @@ function sendViaSmtp(string $host, int $port, string $user, string $pass,
     $send("MIME-Version: 1.0");
     $send("Content-Type: text/plain; charset=UTF-8");
     $send("");
-    $send($body);
+    $send(str_replace("\n.", "\n..", $body));
     $send(".");
     $r = $read();
 
@@ -102,7 +171,13 @@ function loadMailConfig(): array
     ];
     foreach ($possiblePaths as $path) {
         if ($path && file_exists($path)) {
-            return parse_ini_file($path) ?: [];
+            $config = parse_ini_file($path);
+            if ($config === false) {
+                error_log("SMTP: failed to parse config file at {$path}");
+                return [];
+            }
+
+            return $config;
         }
     }
     error_log("SMTP: db-config.ini not found in any expected path");

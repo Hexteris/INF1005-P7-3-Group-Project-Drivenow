@@ -161,23 +161,49 @@ function clearLoginAttempts($email) {
  * Generate password reset token
  */
 function generateResetToken() {
-    return bin2hex(random_bytes(32));
+    try {
+        return bin2hex(random_bytes(32));
+    } catch (Throwable $e) {
+        error_log('Password reset: failed to generate secure token: ' . $e->getMessage());
+        $fallback = openssl_random_pseudo_bytes(32);
+        return $fallback !== false ? bin2hex($fallback) : '';
+    }
 }
 
 /**
  * Store password reset token in database
  */
 function storeResetToken($conn, $email, $token, $expires_minutes = 60) {
-    $expiration = date('Y-m-d H:i:s', strtotime("+$expires_minutes minutes"));
-    
+    $expires_minutes = max(1, (int)$expires_minutes);
+    $expiration = date('Y-m-d H:i:s', time() + ($expires_minutes * 60));
+
     $stmt = $conn->prepare(
-        "UPDATE members 
-         SET reset_token = ?, reset_expires = DATE_ADD(NOW(), INTERVAL ? MINUTE)
-         WHERE email = ?"
+        "UPDATE members
+         SET reset_token = ?, reset_expires = ?
+         WHERE email = ?
+         LIMIT 1"
     );
+
+    if (!$stmt) {
+        error_log('Password reset: storeResetToken prepare failed: ' . $conn->error);
+        return false;
+    }
+
     $stmt->bind_param('sss', $token, $expiration, $email);
-    
-    return $stmt->execute();
+
+    if (!$stmt->execute()) {
+        error_log('Password reset: storeResetToken execute failed for ' . $email . ': ' . $stmt->error);
+        $stmt->close();
+        return false;
+    }
+
+    $updated = $stmt->affected_rows > 0;
+    if (!$updated) {
+        error_log('Password reset: storeResetToken updated 0 rows for ' . $email);
+    }
+
+    $stmt->close();
+    return $updated;
 }
 
 /**
@@ -185,17 +211,37 @@ function storeResetToken($conn, $email, $token, $expires_minutes = 60) {
  */
 function verifyResetToken($conn, $token) {
     $stmt = $conn->prepare(
-        "SELECT member_id, email, reset_expires 
-         FROM members 
-         WHERE reset_token = ? AND reset_expires > NOW()"
+        "SELECT member_id, email, reset_expires
+         FROM members
+         WHERE reset_token = ? AND reset_expires IS NOT NULL AND reset_expires > NOW()
+         LIMIT 1"
     );
+    if (!$stmt) {
+        error_log('Password reset: verifyResetToken prepare failed: ' . $conn->error);
+        return null;
+    }
+
     $stmt->bind_param('s', $token);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
+
+    if (!$stmt->execute()) {
+        error_log('Password reset: verifyResetToken execute failed: ' . $stmt->error);
+        $stmt->close();
+        return null;
+    }
+
+    $stmt->bind_result($member_id, $email, $reset_expires);
+    $row = null;
+
+    if ($stmt->fetch()) {
+        $row = [
+            'member_id' => $member_id,
+            'email' => $email,
+            'reset_expires' => $reset_expires,
+        ];
+    }
+
     $stmt->close();
-    
-    return $row ?: null;
+    return $row;
 }
 
 /**
@@ -203,15 +249,34 @@ function verifyResetToken($conn, $token) {
  */
 function updatePasswordWithToken($conn, $token, $new_password) {
     $hashed = password_hash($new_password, PASSWORD_DEFAULT);
-    
+
     $stmt = $conn->prepare(
-        "UPDATE members 
-         SET password = ?, reset_token = NULL, reset_expires = NULL 
-         WHERE reset_token = ? AND reset_expires > NOW()"
+        "UPDATE members
+         SET password = ?, reset_token = NULL, reset_expires = NULL
+         WHERE reset_token = ? AND reset_expires IS NOT NULL AND reset_expires > NOW()
+         LIMIT 1"
     );
+
+    if (!$stmt) {
+        error_log('Password reset: updatePasswordWithToken prepare failed: ' . $conn->error);
+        return false;
+    }
+
     $stmt->bind_param('ss', $hashed, $token);
-    
-    return $stmt->execute() && $stmt->affected_rows > 0;
+
+    if (!$stmt->execute()) {
+        error_log('Password reset: updatePasswordWithToken execute failed: ' . $stmt->error);
+        $stmt->close();
+        return false;
+    }
+
+    $updated = $stmt->affected_rows > 0;
+    if (!$updated) {
+        error_log('Password reset: updatePasswordWithToken affected 0 rows for token lookup');
+    }
+
+    $stmt->close();
+    return $updated;
 }
 
 /**
@@ -219,12 +284,26 @@ function updatePasswordWithToken($conn, $token, $new_password) {
  */
 function clearResetToken($conn, $email) {
     $stmt = $conn->prepare(
-        "UPDATE members 
-         SET reset_token = NULL, reset_expires = NULL 
-         WHERE email = ?"
+        "UPDATE members
+         SET reset_token = NULL, reset_expires = NULL
+         WHERE email = ?
+         LIMIT 1"
     );
+    if (!$stmt) {
+        error_log('Password reset: clearResetToken prepare failed: ' . $conn->error);
+        return false;
+    }
+
     $stmt->bind_param('s', $email);
-    return $stmt->execute();
+
+    if (!$stmt->execute()) {
+        error_log('Password reset: clearResetToken execute failed for ' . $email . ': ' . $stmt->error);
+        $stmt->close();
+        return false;
+    }
+
+    $stmt->close();
+    return true;
 }
 
 // ============================================================================
