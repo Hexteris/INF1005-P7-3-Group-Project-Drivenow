@@ -1,6 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
-require_once DIR . '/../includes/db-connect.php';
+require_once __DIR__ . '/../includes/db-connect.php';
 
 // Only respond to AJAX requests
 if (!isset($_POST['action']) || $_POST['action'] !== 'validate_discount') {
