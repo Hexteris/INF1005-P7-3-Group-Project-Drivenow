@@ -118,7 +118,7 @@ require_once 'includes/header.php';
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span style="font-size:.88rem;">Total redeemed</span>
-                    <span style="font-size:.88rem;color:#e63946;font-weight:600;">−<?php echo number_format($totalRedeemed); ?> pts</span>
+                    <span style="font-size:.88rem;color:#f94144;font-weight:600;">−<?php echo number_format($totalRedeemed); ?> pts</span>
                 </div>
                 <hr style="border-color:var(--border);margin:.8rem 0;">
                 <div class="d-flex justify-content-between">
@@ -218,7 +218,7 @@ require_once 'includes/header.php';
                                     <?php if ($row['type'] === 'earned'): ?>
                                         <span style="color:#34a853;">+<?php echo number_format($row['points']); ?></span>
                                     <?php else: ?>
-                                        <span style="color:#e63946;"><?php echo number_format($row['points']); ?></span>
+                                        <span style="color:#f94144;"><?php echo number_format($row['points']); ?></span>
                                     <?php endif; ?>
                                 </td>
                             </tr>
