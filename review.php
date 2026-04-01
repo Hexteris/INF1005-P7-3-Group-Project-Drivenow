@@ -58,7 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $hasBooking && !$alreadyReviewed) {
 require_once 'includes/header.php';
 ?>
 
-<section class="page-header">
+<main id="main-content">
+<section class="page-header" aria-label="Leave a review header">
     <div class="container">
         <div class="section-eyebrow">Your Experience</div>
         <h1 class="section-title">Leave a Review</h1>
@@ -89,8 +90,8 @@ require_once 'includes/header.php';
 
             <form method="POST">
                 <div class="mb-4">
-                    <label class="form-label d-block" style="color:var(--text-muted);font-size:.85rem;">Your Rating *</label>
-                    <div class="star-rating">
+                    <label class="form-label d-block" id="rating-label" style="color:var(--text-muted);font-size:.85rem;">Your Rating *</label>
+                    <div class="star-rating" role="radiogroup" aria-labelledby="rating-label">
                         <?php for ($i = 5; $i >= 1; $i--): ?>
                             <input type="radio" id="star<?php echo $i; ?>" name="rating" value="<?php echo $i; ?>"
                                 <?php echo (isset($_POST['rating']) && (int)$_POST['rating'] === $i) ? 'checked' : ''; ?>>
@@ -115,4 +116,5 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+</main>
 <?php require_once 'includes/footer.php'; ?>

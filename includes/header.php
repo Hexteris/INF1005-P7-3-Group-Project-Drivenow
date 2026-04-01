@@ -23,14 +23,15 @@ $isAdmin    = isAdmin();
 </head>
 <body>
 
+<header role="banner">
 <a href="#main-content" class="visually-hidden-focusable" style="position:absolute;top:0;left:0;z-index:9999;background:#e63946;color:#fff;padding:8px 16px;font-size:.85rem;border-radius:0 0 8px 0;">Skip to main content</a>
-<nav class="navbar navbar-expand-lg dn-navbar" role="banner" aria-label="Main navigation">
+<nav class="navbar navbar-expand-lg dn-navbar" role="navigation" aria-label="Main navigation">
     <div class="container">
         <a class="navbar-brand dn-logo" href="<?php echo BASE; ?>/index.php">
             <span class="logo-icon"><i class="bi bi-car-front-fill"></i></span>
             Drive<span class="logo-accent">Now</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-label="Toggle navigation" aria-expanded="false" aria-controls="navbarMain">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarMain">
@@ -69,3 +70,4 @@ $isAdmin    = isAdmin();
         </div>
     </div>
 </nav>
+</header>

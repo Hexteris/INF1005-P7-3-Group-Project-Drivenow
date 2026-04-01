@@ -80,7 +80,8 @@ require_once 'includes/header.php';
 [$msgType, $msgText] = !empty($message) ? explode(':', $message, 2) : ['', ''];
 ?>
 
-<section class="page-header">
+<main id="main-content">
+<section class="page-header" aria-label="My bookings header">
     <div class="container">
         <div class="section-eyebrow">Dashboard</div>
         <h1 class="section-title">My Bookings</h1>
@@ -171,7 +172,7 @@ require_once 'includes/header.php';
     <?php if (empty($bookings)): ?>
         <div class="text-center py-5">
             <div style="font-size:4rem;">📋</div>
-            <h4 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;margin-top:1rem;">No Bookings Yet</h4>
+            <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;margin-top:1rem;">No Bookings Yet</h2>
             <p class="text-muted-dn">Browse our fleet and make your first booking!</p>
             <a href="<?php echo BASE; ?>/cars.php" class="btn btn-accent mt-2">Browse Cars</a>
         </div>
@@ -246,4 +247,5 @@ require_once 'includes/header.php';
     <?php endif; ?>
 </div>
 
+</main>
 <?php require_once 'includes/footer.php'; ?>

@@ -382,7 +382,8 @@ require_once 'includes/header.php';
 .bp-open-maps:hover { border-color: #e63946; color: #e63946; }
 </style>
 
-<section class="page-header">
+<main id="main-content">
+<section class="page-header" aria-label="Book a car">
     <div class="container">
         <div class="section-eyebrow">Booking</div>
         <h1 class="section-title">Reserve Your Car</h1>
@@ -404,17 +405,17 @@ require_once 'includes/header.php';
             <!-- Availability Calendar -->
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;margin:0;">
-                        <i class="bi bi-calendar3 me-2" style="color:#e63946;"></i>Availability Calendar
-                    </h5>
+                    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;margin:0;">
+                        <i class="bi bi-calendar3 me-2" style="color:#e63946;" aria-hidden="true"></i>Availability Calendar
+                    </h2>
                     <button type="button" class="btn btn-sm btn-accent" onclick="jumpToNextSlot()" style="font-size:.8rem;">
                         <i class="bi bi-skip-forward-fill me-1"></i>Next Available Slot
                     </button>
                 </div>
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <button type="button" class="btn btn-sm btn-outline-light" onclick="prevMonth()">&#8592;</button>
+                    <button type="button" class="btn btn-sm btn-outline-light" onclick="prevMonth()" aria-label="Previous month">&#8592;</button>
                     <span id="calMonthLabel" style="font-weight:600;font-size:.95rem;"></span>
-                    <button type="button" class="btn btn-sm btn-outline-light" onclick="nextMonth()">&#8594;</button>
+                    <button type="button" class="btn btn-sm btn-outline-light" onclick="nextMonth()" aria-label="Next month">&#8594;</button>
                 </div>
                 <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;"></div>
                 <div class="d-flex gap-3 mt-3 flex-wrap" style="font-size:.78rem;color:var(--text-muted);">
@@ -427,7 +428,7 @@ require_once 'includes/header.php';
 
             <!-- Booking Form -->
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;">
-                <h4 style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;margin-bottom:.4rem;">Select Date &amp; Time</h4>
+                <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;margin-bottom:.4rem;">Select Date &amp; Time</h2>
                 <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:1.5rem;">
                     <i class="bi bi-info-circle me-1"></i>
                     Times snap to 15-minute slots &middot; Book at least 15 mins ahead &middot; Minimum rental: 1 hour
@@ -957,4 +958,5 @@ function initPickupMap() {
 </script>
 <?php endif; ?>
 
+</main>
 <?php require_once 'includes/footer.php'; ?>
