@@ -29,7 +29,7 @@ $isAdmin    = isAdmin();
             <span class="logo-icon"><i class="bi bi-car-front-fill"></i></span>
             Drive<span class="logo-accent">Now</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarMain">

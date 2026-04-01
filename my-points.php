@@ -8,7 +8,7 @@ require_once 'includes/db-connect.php';
 $member_id = $_SESSION['member_id'];
 
 // Fetch member points
-$stmt = $conn->prepare("SELECT points, full_name FROM members WHERE member_id = ?");
+$stmt = $conn->prepare("SELECT points, full_name, referral_code FROM members WHERE member_id = ?");
 $stmt->bind_param("i", $member_id);
 $stmt->execute();
 $member = $stmt->get_result()->fetch_assoc();
@@ -110,7 +110,7 @@ require_once 'includes/header.php';
 
             <!-- Stats -->
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:1.5rem;">
-                <div style="font-size:.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem;">All Time</div>
+                <div style="font-size:.8rem;color:#9a9a9a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem;">All Time</div>
                 <div class="d-flex justify-content-between mb-2">
                     <span style="font-size:.88rem;">Total earned</span>
                     <span style="font-size:.88rem;color:#34a853;font-weight:600;">+<?php echo number_format($totalEarned); ?> pts</span>
@@ -126,15 +126,36 @@ require_once 'includes/header.php';
                 </div>
             </div>
 
+            <!-- Referral Code Card -->
+            <?php if (!empty($member['referral_code'])): ?>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:1.5rem;">
+                <div style="font-size:.8rem;color:#9a9a9a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.8rem;">Your Referral Code</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="flex:1;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.5rem 1rem;font-family:'Courier New',monospace;font-size:1.1rem;font-weight:700;letter-spacing:.12em;color:#f5d77e;" id="referralCodeDisplay">
+                        <?php echo h($member['referral_code']); ?>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm" id="copyBtn"
+                            onclick="copyReferralCode()"
+                            aria-label="Copy referral code"
+                            style="padding:.45rem .7rem;border-color:var(--border);">
+                        <i class="bi bi-clipboard" id="copyIcon" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div style="font-size:.76rem;color:#9a9a9a;margin-top:.6rem;">
+                    Share this code — your friend gets 15% off their first booking!
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- How it works -->
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;">
-                <div style="font-size:.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem;">How It Works</div>
+                <div style="font-size:.8rem;color:#9a9a9a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem;">How It Works</div>
                 <div style="display:flex;flex-direction:column;gap:10px;">
                     <div style="display:flex;gap:10px;align-items:flex-start;">
                         <div style="width:28px;height:28px;background:#34a85322;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                             <i class="bi bi-plus-circle-fill" style="color:#34a853;font-size:13px;"></i>
                         </div>
-                        <div style="font-size:.82rem;color:var(--text-muted);">
+                        <div style="font-size:.82rem;color:#9a9a9a;">
                             Earn <strong style="color:var(--text);">1 point</strong> for every S$1 spent on bookings
                         </div>
                     </div>
@@ -142,7 +163,7 @@ require_once 'includes/header.php';
                         <div style="width:28px;height:28px;background:#e6394622;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                             <i class="bi bi-tag-fill" style="color:#e63946;font-size:13px;"></i>
                         </div>
-                        <div style="font-size:.82rem;color:var(--text-muted);">
+                        <div style="font-size:.82rem;color:#9a9a9a;">
                             Redeem <strong style="color:var(--text);">100 points</strong> for <strong style="color:var(--text);">S$5 off</strong> your next booking
                         </div>
                     </div>
@@ -150,7 +171,7 @@ require_once 'includes/header.php';
                         <div style="width:28px;height:28px;background:#f5d77e22;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                             <i class="bi bi-trophy-fill" style="color:#d4af37;font-size:13px;"></i>
                         </div>
-                        <div style="font-size:.82rem;color:var(--text-muted);">
+                        <div style="font-size:.82rem;color:#9a9a9a;">
                             <strong style="color:var(--text);">Bronze → Silver → Gold</strong> tiers unlock as you accumulate points
                         </div>
                     </div>
@@ -168,7 +189,7 @@ require_once 'includes/header.php';
                 <?php if (empty($history)): ?>
                 <div style="text-align:center;padding:3rem;">
                     <div style="font-size:3rem;margin-bottom:1rem;">⭐</div>
-                    <p style="color:var(--text-muted);">No points activity yet. Book a car to start earning!</p>
+                    <p style="color:#9a9a9a;">No points activity yet. Book a car to start earning!</p>
                     <a href="<?php echo BASE; ?>/cars.php" class="btn btn-accent btn-sm mt-2">Browse Cars</a>
                 </div>
                 <?php else: ?>
@@ -185,11 +206,11 @@ require_once 'includes/header.php';
                         <tbody>
                             <?php foreach ($history as $row): ?>
                             <tr>
-                                <td style="color:var(--text-muted);font-size:.82rem;white-space:nowrap;">
+                                <td style="color:#9a9a9a;font-size:.82rem;white-space:nowrap;">
                                     <?php echo date('d M Y', strtotime($row['created_at'])); ?>
                                 </td>
                                 <td style="font-size:.85rem;"><?php echo h($row['description']); ?></td>
-                                <td style="font-size:.82rem;color:var(--text-muted);">
+                                <td style="font-size:.82rem;color:#9a9a9a;">
                                     <?php echo !empty($row['make']) ? h($row['make'].' '.$row['model']) : '–'; ?>
                                 </td>
                                 <td style="text-align:right;font-weight:600;white-space:nowrap;">
@@ -226,5 +247,31 @@ require_once 'includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+function copyReferralCode() {
+    const code = document.getElementById('referralCodeDisplay').textContent.trim();
+    navigator.clipboard.writeText(code).then(() => {
+        const icon = document.getElementById('copyIcon');
+        const btn  = document.getElementById('copyBtn');
+        icon.className = 'bi bi-check-lg';
+        btn.style.borderColor  = '#34a853';
+        btn.style.color        = '#34a853';
+        setTimeout(() => {
+            icon.className     = 'bi bi-clipboard';
+            btn.style.borderColor = '';
+            btn.style.color       = '';
+        }, 2000);
+    }).catch(() => {
+        // Fallback for older browsers
+        const el = document.createElement('textarea');
+        el.value = code;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+    });
+}
+</script>
 
 <?php require_once 'includes/footer.php'; ?>
