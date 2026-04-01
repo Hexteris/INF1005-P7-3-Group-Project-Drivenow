@@ -198,7 +198,7 @@ require_once 'includes/header.php';
         </div>
     <?php else: ?>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
-            <div style="overflow-x:auto;">
+            <div style="overflow-x:auto;" tabindex="0">
                 <table class="dn-table">
                     <thead>
                         <tr>

@@ -194,7 +194,7 @@ require_once 'includes/header.php';
                     <a href="<?php echo BASE; ?>/cars.php" class="btn btn-accent btn-sm mt-2">Browse Cars</a>
                 </div>
                 <?php else: ?>
-                <div style="overflow-x:auto;">
+                <div style="overflow-x:auto;" tabindex="0">
                     <table class="dn-table">
                         <thead>
                             <tr>

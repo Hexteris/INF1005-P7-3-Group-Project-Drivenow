@@ -23,9 +23,9 @@ $isAdmin    = isAdmin();
 </head>
 <body>
 
-<header role="banner">
+<header>
 <a href="#main-content" class="visually-hidden-focusable" style="position:absolute;top:0;left:0;z-index:9999;background:#e63946;color:#fff;padding:8px 16px;font-size:.85rem;border-radius:0 0 8px 0;">Skip to main content</a>
-<nav class="navbar navbar-expand-lg dn-navbar" role="navigation" aria-label="Main navigation">
+<nav class="navbar navbar-expand-lg dn-navbar" aria-label="Main navigation">
     <div class="container">
         <a class="navbar-brand dn-logo" href="<?php echo BASE; ?>/index.php">
             <span class="logo-icon"><i class="bi bi-car-front-fill"></i></span>
