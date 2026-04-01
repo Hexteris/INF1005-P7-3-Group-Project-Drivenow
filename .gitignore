@@ -2,6 +2,7 @@
 db-config.ini
 db-config.ini.template
 gen-hash.php
+credentials.txt
 
 # VS Code SFTP credentials
 .vscode/sftp.json
