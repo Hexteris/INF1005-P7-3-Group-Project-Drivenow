@@ -29,7 +29,7 @@ $isAdmin    = isAdmin();
             <span class="logo-icon"><i class="bi bi-car-front-fill"></i></span>
             Drive<span class="logo-accent">Now</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarMain">
@@ -38,6 +38,19 @@ $isAdmin    = isAdmin();
                 <li class="nav-item"><a class="nav-link" href="<?php echo BASE; ?>/cars.php">Browse Cars</a></li>
                 <?php if ($isLoggedIn): ?>
                 <li class="nav-item"><a class="nav-link" href="<?php echo BASE; ?>/my-bookings.php">My Bookings</a></li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-1" href="<?php echo BASE; ?>/my-points.php">
+                        <i class="bi bi-star-fill" style="color:#f5d77e;font-size:.8rem;"></i> My Points
+                    </a>
+                </li>
+                <?php else: ?>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-1"
+                       href="<?php echo BASE; ?>/login.php?redirect=my-points"
+                       title="Log in to view your points">
+                        <i class="bi bi-star" style="color:#888;font-size:.8rem;"></i> My Points
+                    </a>
+                </li>
                 <?php endif; ?>
             </ul>
             <div class="d-flex align-items-center gap-3">
