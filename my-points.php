@@ -55,7 +55,7 @@ $tier = getTier($points);
 require_once 'includes/header.php';
 ?>
 
-<section class="page-header">
+<section class="page-header" aria-label="Page header">
     <div class="container">
         <div class="section-eyebrow">Rewards</div>
         <h1 class="section-title">My Loyalty Points</h1>
@@ -63,6 +63,7 @@ require_once 'includes/header.php';
     </div>
 </section>
 
+<main id="main-content">
 <div class="container pb-5">
     <div class="row g-4">
 
@@ -70,7 +71,7 @@ require_once 'includes/header.php';
         <div class="col-lg-4">
 
             <!-- Points balance card -->
-            <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);border-radius:var(--radius);padding:2rem;margin-bottom:1.5rem;text-align:center;">
+            <div role="region" aria-label="Points balance" style="background:linear-gradient(135deg,#1a1a2e,#0f3460);border-radius:var(--radius);padding:2rem;margin-bottom:1.5rem;text-align:center;">
                 <div style="font-size:.75rem;color:#aaa;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem;">Current Balance</div>
                 <div style="font-family:'Bebas Neue',sans-serif;font-size:3.5rem;color:#f5d77e;line-height:1;">
                     <?php echo number_format($points); ?>
@@ -109,7 +110,7 @@ require_once 'includes/header.php';
             </div>
 
             <!-- Stats -->
-            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:1.5rem;">
+            <div role="region" aria-label="Points statistics" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:1.5rem;">
                 <div style="font-size:.8rem;color:#9a9a9a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem;">All Time</div>
                 <div class="d-flex justify-content-between mb-2">
                     <span style="font-size:.88rem;">Total earned</span>
@@ -128,7 +129,7 @@ require_once 'includes/header.php';
 
             <!-- Referral Code Card -->
             <?php if (!empty($member['referral_code'])): ?>
-            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:1.5rem;">
+            <div role="region" aria-label="Points statistics" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:1.5rem;">
                 <div style="font-size:.8rem;color:#9a9a9a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.8rem;">Your Referral Code</div>
                 <div style="display:flex;align-items:center;gap:8px;">
                     <div style="flex:1;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.5rem 1rem;font-family:'Courier New',monospace;font-size:1.1rem;font-weight:700;letter-spacing:.12em;color:#f5d77e;" id="referralCodeDisplay">
@@ -274,4 +275,5 @@ function copyReferralCode() {
 }
 </script>
 
+</main>
 <?php require_once 'includes/footer.php'; ?>

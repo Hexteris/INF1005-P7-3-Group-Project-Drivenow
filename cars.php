@@ -4,8 +4,24 @@ require_once 'includes/header.php';
 require_once 'includes/db-connect.php';
 require_once 'includes/auth.php';
 
-define('GMAPS_KEY', $_ENV['GMAPS_KEY'] ?? '');
-
+// Load Google Maps key from same db-config.ini the project already uses
+if (!defined('GMAPS_KEY')) {
+    $possiblePaths = [
+        '/var/www/private/db-config.ini',
+        'C:/xampp/drivenow-private/db-config.ini',
+        getenv('USERPROFILE') . '/Herd/drivenow-private/db-config.ini',
+        dirname(__DIR__) . '/../../drivenow-private/db-config.ini',
+    ];
+    $gmapsKey = '';
+    foreach ($possiblePaths as $path) {
+        if ($path && file_exists($path)) {
+            $ini = parse_ini_file($path);
+            $gmapsKey = $ini['gmaps_key'] ?? '';
+            break;
+        }
+    }
+    define('GMAPS_KEY', $gmapsKey);
+}
 
 // Filter inputs
 $category  = $_GET['category']  ?? '';
@@ -70,7 +86,8 @@ $mapJson = json_encode(array_map(fn($c) => [
 ], $mapCars));
 ?>
 
-<section class="page-header">
+<main id="main-content">
+<section class="page-header" aria-label="Page header">
     <div class="container">
         <div class="section-eyebrow">Available Now</div>
         <h1 class="section-title">Browse Our Fleet</h1>
@@ -83,13 +100,13 @@ $mapJson = json_encode(array_map(fn($c) => [
     <form method="GET" action="<?php echo BASE; ?>/cars.php" class="filter-bar mb-4">
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label text-muted-dn" style="font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;">Search</label>
-                <input type="text" class="form-control" name="search" placeholder="Make, model, plate..."
+                <label class="form-label text-muted-dn" for="filter-search" style="font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;">Search</label>
+                <input type="text" class="form-control" id="filter-search" name="search" placeholder="Make, model, plate..."
                     value="<?php echo h($search); ?>">
             </div>
             <div class="col-md-2">
-                <label class="form-label text-muted-dn" style="font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;">Category</label>
-                <select class="form-select" name="category">
+                <label class="form-label text-muted-dn" for="filter-category" style="font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;">Category</label>
+                <select class="form-select" id="filter-category" name="category" aria-label="Filter by category">
                     <option value="">All Categories</option>
                     <?php foreach (['Economy','Comfort','SUV','Premium'] as $cat): ?>
                         <option value="<?php echo $cat; ?>" <?php echo $category === $cat ? 'selected' : ''; ?>><?php echo $cat; ?></option>
@@ -97,8 +114,8 @@ $mapJson = json_encode(array_map(fn($c) => [
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label text-muted-dn" style="font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;">Location</label>
-                <select class="form-select" name="location">
+                <label class="form-label text-muted-dn" for="filter-location" style="font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;">Location</label>
+                <select class="form-select" id="filter-location" name="location" aria-label="Filter by location">
                     <option value="">All Locations</option>
                     <?php foreach ($locations as $loc): ?>
                         <option value="<?php echo h($loc['location']); ?>" <?php echo $location === $loc['location'] ? 'selected' : ''; ?>>
@@ -108,13 +125,13 @@ $mapJson = json_encode(array_map(fn($c) => [
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label text-muted-dn" style="font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;">Max $/hr</label>
-                <input type="number" class="form-control" name="max_price" placeholder="e.g. 20"
+                <label class="form-label text-muted-dn" for="filter-maxprice" style="font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;">Max $/hr</label>
+                <input type="number" class="form-control" id="filter-maxprice" name="max_price" placeholder="e.g. 20"
                     value="<?php echo h($max_price); ?>" min="1" step="0.5">
             </div>
             <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-accent w-100">Filter</button>
-                <a href="<?php echo BASE; ?>/cars.php" class="btn btn-outline-light">Reset</a>
+                <button type="submit" class="btn btn-accent w-100" aria-label="Apply filters">Filter</button>
+                <a href="<?php echo BASE; ?>/cars.php" class="btn btn-outline-light" aria-label="Reset all filters">Reset</a>
             </div>
         </div>
     </form>
@@ -145,9 +162,7 @@ $mapJson = json_encode(array_map(fn($c) => [
                          style="cursor:pointer;">
                         <div class="car-card-img">
                             <?php if (!empty($car['image_url'])): ?>
-                               <img src="<?php echo BASE; ?>/uploads/cars/<?php echo h($car['image_url']); ?>"
-                                    alt="<?php echo h($car['make'].' '.$car['model']); ?>"
-                                    loading="lazy">
+                                <img src="<?php echo h($car['image_url']); ?>" alt="<?php echo h($car['make'].' '.$car['model']); ?>">
                             <?php else: ?>
                                 <?php echo $categoryIcons[$car['category']] ?? '🚗'; ?>
                             <?php endif; ?>
@@ -289,4 +304,5 @@ function focusMapPin(carId) {
 </script>
 <!-- ────────────────────────────────────────────────────────── -->
 
+</main>
 <?php require_once 'includes/footer.php'; ?>

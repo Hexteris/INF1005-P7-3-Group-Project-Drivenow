@@ -99,7 +99,7 @@ a:hover { opacity: 0.8; }
 
 /* ---- Buttons ---- */
 .btn-accent {
-    background: var(--accent);
+    background: #c1121f;
     color: #fff !important;
     border: none;
     font-weight: 600;
@@ -108,9 +108,9 @@ a:hover { opacity: 0.8; }
     transition: transform var(--transition), box-shadow var(--transition);
 }
 .btn-accent:hover {
-    background: #c1121f;
+    background: #a50f1a;
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(230,57,70,0.35);
+    box-shadow: 0 6px 20px rgba(193,18,31,0.35);
 }
 
 
