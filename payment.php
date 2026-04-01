@@ -363,7 +363,7 @@ require_once 'includes/header.php';
                             <label class="form-label" style="color:var(--text-muted);font-size:.85rem;letter-spacing:.04em;">CVV</label>
                             <div style="position:relative;">
                                 <input type="password" class="form-control pay-input" id="card_cvv" name="card_cvv"
-                                    placeholder="•••" maxlength="4" autocomplete="cc-csc" required
+                                    placeholder="•••" maxlength="4" autocomplete="off" required
                                     value="<?php echo h($_POST['card_cvv'] ?? ''); ?>">
                                 <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:.9rem;">
                                     <i class="bi bi-question-circle" title="3 digits on back of card"></i>
@@ -439,107 +439,6 @@ require_once 'includes/header.php';
     <?php endif; ?>
 </div>
 
-<style>
-.pay-input {
-    background: var(--bg-raised);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: var(--radius-sm);
-    padding: .7rem 1rem;
-    font-size: .95rem;
-    transition: border-color .25s, box-shadow .25s;
-}
-.pay-input:focus {
-    border-color: var(--border-acc);
-    box-shadow: 0 0 0 3px rgba(230,57,70,0.12);
-    background: var(--bg-raised);
-    color: var(--text);
-    outline: none;
-}
-.pay-input.invalid { border-color: #f94144; }
-.pay-input.valid   { border-color: #34a853; }
-
-.card-chip {
-    display: inline-block;
-    padding: .2rem .6rem;
-    border-radius: 4px;
-    font-size: .7rem;
-    font-weight: 700;
-    letter-spacing: .06em;
-    background: var(--bg-raised);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-}
-
-/* Credit card preview */
-.credit-card-preview {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    border-radius: 16px;
-    padding: 1.5rem;
-    color: #fff;
-    font-family: 'Courier New', monospace;
-    position: relative;
-    overflow: hidden;
-    min-height: 160px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-}
-.credit-card-preview::before {
-    content: '';
-    position: absolute;
-    top: -40px; right: -40px;
-    width: 180px; height: 180px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.04);
-}
-.credit-card-preview::after {
-    content: '';
-    position: absolute;
-    bottom: -60px; left: -20px;
-    width: 220px; height: 220px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.03);
-}
-.card-preview-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.card-chip-icon {
-    width: 36px; height: 28px;
-    background: linear-gradient(135deg, #d4af37, #f5d77e);
-    border-radius: 5px;
-    position: relative;
-}
-.card-chip-icon::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 0; right: 0;
-    height: 1px;
-    background: rgba(0,0,0,0.2);
-    transform: translateY(-50%);
-}
-.card-type-label {
-    font-size: .8rem;
-    font-weight: 700;
-    letter-spacing: .1em;
-    opacity: .9;
-}
-.card-number-preview {
-    font-size: 1.2rem;
-    letter-spacing: .15em;
-    margin: .8rem 0;
-    opacity: .9;
-}
-.card-preview-bottom {
-    display: flex;
-    justify-content: space-between;
-    font-size: .8rem;
-    opacity: .85;
-}
-</style>
 
 <script>
 const BOOKING_TOTAL    = <?php echo (float)$booking['total_cost']; ?>;
