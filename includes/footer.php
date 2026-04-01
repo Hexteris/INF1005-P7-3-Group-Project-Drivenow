@@ -7,7 +7,7 @@
                 <p class="footer-tagline">Singapore's premium hourly car rental. Drive when you want, where you want.</p>
             </div>
             <div class="col-md-2">
-                <h6 class="footer-heading">Company</h6>
+                <h3 class="footer-heading">Company</h3>
                 <ul class="footer-links">
                     <li><a href="<?php echo BASE; ?>/index.php">Home</a></li>
                     <li><a href="<?php echo BASE; ?>/about.php">About Us</a></li>
@@ -15,7 +15,7 @@
                 </ul>
             </div>
             <div class="col-md-2">
-                <h6 class="footer-heading">Account</h6>
+                <h3 class="footer-heading">Account</h3>
                 <ul class="footer-links">
                     <li><a href="<?php echo BASE; ?>/register.php">Register</a></li>
                     <li><a href="<?php echo BASE; ?>/login.php">Login</a></li>
@@ -23,7 +23,7 @@
                 </ul>
             </div>
             <div class="col-md-4">
-                <h6 class="footer-heading">Contact</h6>
+                <h3 class="footer-heading">Contact</h3>
                 <p class="footer-tagline"><i class="bi bi-geo-alt-fill me-1"></i> 1 Tech Park Ave, Singapore 099234</p>
                 <p class="footer-tagline"><i class="bi bi-envelope-fill me-1"></i> angweilong12345@gmail.com</p>
                 <p class="footer-tagline"><i class="bi bi-telephone-fill me-1"></i> +65 6123 4567</p>
