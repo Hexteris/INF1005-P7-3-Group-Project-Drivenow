@@ -2,6 +2,9 @@
 $pageTitle = 'Dashboard';
 require_once '../includes/db-connect.php';
 require_once 'admin-header.php';
+?>
+<main id="main-content" aria-label="Dashboard">
+<?php
 
 $totalCars     = $conn->query("SELECT COUNT(*) AS n FROM cars")->fetch_assoc()['n'];
 $availableCars = $conn->query("SELECT COUNT(*) AS n FROM cars WHERE is_available=1")->fetch_assoc()['n'];
@@ -175,4 +178,7 @@ $recent = $conn->query("
     </div>
 </div>
 
-<?php require_once 'admin-footer.php'; ?>
+<?php ?>
+</main>
+<?php
+require_once 'admin-footer.php'; ?>

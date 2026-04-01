@@ -2,6 +2,9 @@
 $pageTitle = 'Manage Reviews';
 require_once '../includes/db-connect.php';
 require_once 'admin-header.php';
+?>
+<main id="main-content" aria-label="Manage reviews">
+<?php
 
 $message = '';
 if (isset($_GET['delete'])) {
@@ -54,4 +57,7 @@ $reviews = $conn->query("
     </div>
 </div>
 
-<?php require_once 'admin-footer.php'; ?>
+<?php ?>
+</main>
+<?php
+require_once 'admin-footer.php'; ?>

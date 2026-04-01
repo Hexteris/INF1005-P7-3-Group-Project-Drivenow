@@ -2,6 +2,9 @@
 $pageTitle = 'Manage Payments';
 require_once '../includes/db-connect.php';
 require_once 'admin-header.php';
+?>
+<main id="main-content" aria-label="Manage payments">
+<?php
 
 $message = '';
 
@@ -169,4 +172,7 @@ $stats = $conn->query("
     </div>
 </div>
 
-<?php require_once 'admin-footer.php'; ?>
+<?php ?>
+</main>
+<?php
+require_once 'admin-footer.php'; ?>

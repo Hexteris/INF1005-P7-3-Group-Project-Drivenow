@@ -18,7 +18,8 @@ function h($s) { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
 </head>
 <body>
 
-<nav class="admin-sidebar">
+<a href="#main-content" class="visually-hidden-focusable" style="position:absolute;top:0;left:0;z-index:9999;background:#c1121f;color:#fff;padding:8px 16px;font-size:.85rem;">Skip to main content</a>
+<nav class="admin-sidebar" role="navigation" aria-label="Admin navigation">
     <div class="admin-logo"><i class="bi bi-car-front-fill" style="color:var(--accent);"></i> DriveNow</div>
     <div style="padding:0 0.75rem;margin-bottom:0.5rem;font-size:.7rem;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;">Main</div>
     <a href="<?php echo BASE; ?>/admin/index.php"           class="admin-nav-link <?php echo $currentPage==='index.php'?'active':''; ?>"><i class="bi bi-speedometer2"></i> Dashboard</a>

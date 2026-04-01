@@ -2,6 +2,9 @@
 $pageTitle = 'Manage Cars';
 require_once '../includes/db-connect.php';
 require_once 'admin-header.php';
+?>
+<main id="main-content" aria-label="Manage cars">
+<?php
 
 $message = '';
 
@@ -230,4 +233,7 @@ function editCar(c) {
 }
 </script>
 
-<?php require_once 'admin-footer.php'; ?>
+<?php ?>
+</main>
+<?php
+require_once 'admin-footer.php'; ?>
