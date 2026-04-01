@@ -30,7 +30,3 @@ DriveNow is a car rental management system built for both customers and admins. 
 - The full project details, design decisions, and implementation breakdown are covered in the report.
 - This README is meant as a quick project overview only.
 
-## Authors
-
-- Your Name
-- Team Members
