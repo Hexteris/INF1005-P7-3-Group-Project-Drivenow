@@ -1,3 +1,0 @@
-ALTER TABLE members ADD COLUMN IF NOT EXISTS reset_token VARCHAR(64) NULL;
-ALTER TABLE members ADD COLUMN IF NOT EXISTS reset_expires DATETIME NULL;
-ALTER TABLE members ADD INDEX IF NOT EXISTS idx_reset_token (reset_token);
