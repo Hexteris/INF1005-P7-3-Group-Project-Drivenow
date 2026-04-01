@@ -3,6 +3,7 @@ db-config.ini
 db-config.ini.template
 gen-hash.php
 credentials.txt
+car_rental.sql
 
 # VS Code SFTP credentials
 .vscode/sftp.json
