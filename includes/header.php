@@ -2,6 +2,17 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/security.php';
+
+if (isset($_SESSION['member_id'])) {
+    if (isSessionTimedOut()) {
+        session_destroy();
+        $_SESSION = [];
+        header("Location: " . BASE . "/login.php?timeout=1");
+        exit();
+    }
+}
+
 $isLoggedIn = isLoggedIn();
 $isAdmin    = isAdmin();
 ?>
@@ -70,4 +81,12 @@ $isAdmin    = isAdmin();
         </div>
     </div>
 </nav>
+
+<?php if (isset($_GET['timeout']) && $_GET['timeout'] == 1): ?>
+<div class="alert alert-warning m-0 text-center" style="border-radius: 0; margin-bottom: 0;">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    Your session has expired due to inactivity. Please log in again.
+</div>
+<?php endif; ?>
+
 </header>
