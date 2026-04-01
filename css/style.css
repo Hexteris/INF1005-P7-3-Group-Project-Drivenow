@@ -1,21 +1,7 @@
 /* =============================================
    DriveNow – Custom Stylesheet
    Theme: Dark Premium Automotive
-   ============================================= */
-
-
-:root {
-    --bg-base:    #090909;
-    --bg-surface: #111111;
-    --bg-card:    #181818;
-    --bg-raised:  #222222;
-    --accent:     #e63946;
-    --accent-dim: rgba(230, 57, 70, 0.15);
-    --text:       #f0f0f0;/* =============================================
-   DriveNow – Custom Stylesheet
-   Theme: Dark Premium Automotive
-   ============================================= */
-
+============================================= */
 
 :root {
     --bg-base:    #090909;
@@ -374,7 +360,7 @@ a:hover { opacity: 0.8; }
 
 
 .badge-economy  { background: rgba(52,168,83,0.15);  color: #34a853; border: 1px solid rgba(52,168,83,0.3); }
-.badge-comfort  { background: rgba(66,133,244,0.15); color: #4285f4; border: 1px solid rgba(66,133,244,0.3); }
+.badge-comfort  { background: rgba(66,133,244,0.15); color: #7ab3ff; border: 1px solid rgba(66,133,244,0.3); }
 .badge-suv      { background: rgba(251,188,5,0.15);  color: #fbbc05; border: 1px solid rgba(251,188,5,0.3); }
 .badge-premium  { background: rgba(230,57,70,0.15);  color: #e63946; border: 1px solid rgba(230,57,70,0.3); }
 
@@ -773,4 +759,3 @@ a:hover { opacity: 0.8; }
     .admin-content { margin-left: 0; }
 }
 
-} 
