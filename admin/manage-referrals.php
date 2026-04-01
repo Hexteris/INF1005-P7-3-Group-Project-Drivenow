@@ -76,7 +76,7 @@ $members_with_codes = $conn->query("
     <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);">
         <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;margin:0;">Member Referral Codes</h3>
     </div>
-    <div style="overflow-x:auto;">
+    <div style="overflow-x:auto;" tabindex="0" role="region" aria-label="Referrals table">
         <table class="dn-table" aria-label="Member referral codes">
             <thead>
                 <tr>
@@ -115,7 +115,7 @@ $members_with_codes = $conn->query("
     <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);">
         <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;margin:0;">Referral Usage Log</h3>
     </div>
-    <div style="overflow-x:auto;">
+    <div style="overflow-x:auto;" tabindex="0" role="region" aria-label="Referral usage log table">
         <table class="dn-table" aria-label="Referral usage log">
             <thead>
                 <tr>
@@ -142,7 +142,7 @@ $members_with_codes = $conn->query("
                         <div style="font-size:.78rem;color:var(--text-muted);"><?php echo h($r['referrer_email']); ?></div>
                     </td>
                     <td>
-                        <code style="background:var(--bg-raised);padding:.2rem .5rem;border-radius:var(--radius-sm);font-size:.82rem;">
+                        <code style="background:var(--bg-raised);color:var(--code-text);padding:.2rem .5rem;border-radius:var(--radius-sm);font-size:.82rem;">
                             <?php echo h($r['referral_code']); ?>
                         </code>
                     </td>
