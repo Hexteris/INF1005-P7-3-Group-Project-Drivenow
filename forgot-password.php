@@ -27,7 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $token = generateResetToken();
             
             // Store token in database
-            if (storeResetToken($conn, $email, $token, $expires_minutes = 60)) {
+            $expires_minutes = 60;
+            if (storeResetToken($conn, $email, $token, $expires_minutes)) {
                 // Send reset email
                 $reset_link = BASE . "/reset-password.php?token=" . urlencode($token);
                 
