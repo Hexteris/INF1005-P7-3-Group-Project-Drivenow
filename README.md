@@ -15,7 +15,7 @@ DriveNow is a car rental management system built for both customers and admins. 
 
 ## Website
 
-- visit our webstie at 35.212.138.18/
+- Visit our webstie at 35.212.138.18
 
 ## Tech Stack
 
