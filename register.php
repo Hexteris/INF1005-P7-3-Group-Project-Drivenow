@@ -118,6 +118,7 @@ require_once 'includes/config.php';
 require_once 'includes/header.php';
 ?>
 
+
 <main id="main-content">
 <section class="page-header" aria-label="Create account header">
     <div class="container text-center">
@@ -230,34 +231,6 @@ require_once 'includes/header.php';
         </p>
     </div>
 </div>
-
-<style>
-.req-hint {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: .78rem;
-    color: var(--text-muted);
-    transition: color .2s;
-}
-.req-hint .req-icon { transition: all .2s; }
-.req-hint.req-pass {
-    color: #34a853;
-}
-.req-hint.req-pass .req-icon::before {
-    content: "\f26a"; /* bi-check-circle-fill */
-    font-family: "bootstrap-icons";
-    color: #34a853;
-}
-.req-hint.req-fail {
-    color: #f94144;
-}
-.req-hint.req-fail .req-icon::before {
-    content: "\f623"; /* bi-x-circle */
-    font-family: "bootstrap-icons";
-    color: #f94144;
-}
-</style>
 
 <script>
 function validatePassword(input) {

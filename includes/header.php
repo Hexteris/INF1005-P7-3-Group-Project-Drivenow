@@ -31,6 +31,31 @@ $isAdmin    = isAdmin();
     <?php if (isset($pageTitle) && ($pageTitle === 'Register' || $pageTitle === 'Login')): ?>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <?php endif; ?>
+    <?php if (isset($pageTitle) && $pageTitle === 'Register'): ?>
+    <style>
+    .req-hint {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: .78rem;
+        color: var(--text-muted);
+        transition: color .2s;
+    }
+    .req-hint .req-icon { transition: all .2s; }
+    .req-hint.req-pass { color: #34a853; }
+    .req-hint.req-pass .req-icon::before {
+        content: "\f26a";
+        font-family: "bootstrap-icons";
+        color: #34a853;
+    }
+    .req-hint.req-fail { color: #f94144; }
+    .req-hint.req-fail .req-icon::before {
+        content: "\f623";
+        font-family: "bootstrap-icons";
+        color: #f94144;
+    }
+    </style>
+    <?php endif; ?>
 </head>
 <body>
 
