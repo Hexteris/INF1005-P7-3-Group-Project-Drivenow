@@ -126,7 +126,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 } else {
                                     $referrer_id        = $result['member_id'];
                                     $discountPercent    = 15;
-                                    $cost               = round($cost * (1 - $discountPercent / 100), 2);
+                                    $discountMultiplier = 1 - ($discountPercent / 100);
+                                    $cost               = round($cost * $discountMultiplier, 2);
                                     $discount_applied   = true;
                                 }
                             }
@@ -467,7 +468,7 @@ require_once 'includes/header.php';
                         </label>
                         <input type="text" class="form-control" id="referral_code" name="referral_code"
                             style="background:var(--bg-raised);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:.7rem 1rem;"
-                            placeholder="Enter code for 15% off first booking">
+                            placeholder="Enter code for a discount">
                         <small id="discount_feedback" style="font-size:.78rem;margin-top:.3rem;display:block;"></small>
                     </div>
 
@@ -641,6 +642,7 @@ function applyReferralDiscount() {
         showBasePrice(hours, pricePerHr);
         feedbackEl.textContent = '';
         discountRow.style.display = 'none';
+        document.getElementById('discount_amount').textContent = '- S$ 0.00';
         return;
     }
 
@@ -662,6 +664,7 @@ function applyReferralDiscount() {
             feedbackEl.textContent    = data.message;
             feedbackEl.style.color    = '#f94144';
             discountRow.style.display = 'none';
+            document.getElementById('discount_amount').textContent = '- S$ 0.00';
         }
     })
     .catch(console.error);

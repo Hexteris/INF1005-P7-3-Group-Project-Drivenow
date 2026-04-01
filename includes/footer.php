@@ -1,5 +1,5 @@
 <?php if (!defined('BASE')) require_once __DIR__ . '/config.php'; ?>
-<footer class="dn-footer mt-auto" role="contentinfo" aria-label="Site footer">
+<footer class="dn-footer mt-auto" aria-label="Site footer">
     <div class="container">
         <div class="row gy-4">
             <div class="col-md-4">
