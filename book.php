@@ -646,7 +646,7 @@ function applyReferralDiscount() {
         return;
     }
 
-    fetch('<?php echo BASE; ?>/validate_discount.php', {
+    fetch('<?php echo BASE; ?>/ajax/validate_discount.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ action:'validate_discount', referral_code:code, hours, price_per_hr:pricePerHr })
