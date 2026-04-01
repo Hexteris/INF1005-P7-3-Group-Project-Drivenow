@@ -3,6 +3,7 @@ $pageTitle = 'Login';
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'includes/db-connect.php';
 require_once 'includes/auth.php';
+require_once 'includes/security.php';
 
 if (isLoggedIn()) { header("Location: " . BASE . "/my-bookings.php"); exit(); }
 
@@ -10,49 +11,65 @@ $error = '';
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $captcha_secret   = '6LdZc5gsAAAAANBuDosEPrR7f-o_rLt_IB-jGiZv';
-    $captcha_response = $_POST['g-recaptcha-response'] ?? '';
-    $captcha_passed = false;
-
-    if (empty($captcha_response)) {
-        $errors['captcha'] = 'Please complete the CAPTCHA verification.';
+    $email = trim($_POST['email'] ?? '');
+    
+    // ===== RATE LIMITING CHECK =====
+    $rate_limit = checkLoginRateLimit($email, $max_attempts = 5, $lockout_minutes = 15);
+    
+    if ($rate_limit['limited']) {
+        $minutes_remaining = ceil($rate_limit['remaining_seconds'] / 60);
+        $error = "Too many login attempts. Please try again in $minutes_remaining minutes.";
     } else {
-        $verify = file_get_contents(
-            "https://www.google.com/recaptcha/api/siteverify?secret=" .
-            urlencode($captcha_secret) . "&response=" . urlencode($captcha_response)
-        );
-        $captcha_result = json_decode($verify, true);
-        if ($captcha_result['success']) {
-            $captcha_passed = true;
+        $captcha_secret   = '6LdZc5gsAAAAANBuDosEPrR7f-o_rLt_IB-jGiZv';
+        $captcha_response = $_POST['g-recaptcha-response'] ?? '';
+        $captcha_passed = false;
+
+        if (empty($captcha_response)) {
+            $errors['captcha'] = 'Please complete the CAPTCHA verification.';
         } else {
-            $errors['captcha'] = 'CAPTCHA verification failed. Please try again.';
-        }
-    }
-
-    if ($captcha_passed) {
-        $email    = trim($_POST['email']    ?? '');
-        $password = $_POST['password'] ?? '';
-
-        if (empty($email) || empty($password)) {
-            $error = 'Please enter your email and password.';
-        } else {
-            $stmt = $conn->prepare("SELECT member_id, full_name, password FROM members WHERE email = ?");
-            $stmt->bind_param("s", $email);
-            $stmt->execute();
-            $stmt->store_result();
-            $stmt->bind_result($member_id, $full_name, $hashed);
-
-            if ($stmt->fetch() && password_verify($password, $hashed)) {
-                $_SESSION['member_id']  = $member_id;
-                $_SESSION['full_name']  = $full_name;
-                $_SESSION['email']      = $email;
-                session_regenerate_id(true); // Prevent session fixation
-                header("Location: " . BASE . "/my-bookings.php");
-                exit();
+            $verify = file_get_contents(
+                "https://www.google.com/recaptcha/api/siteverify?secret=" .
+                urlencode($captcha_secret) . "&response=" . urlencode($captcha_response)
+            );
+            $captcha_result = json_decode($verify, true);
+            if ($captcha_result['success']) {
+                $captcha_passed = true;
             } else {
-                $error = 'Invalid email or password.';
+                $errors['captcha'] = 'CAPTCHA verification failed. Please try again.';
             }
-            $stmt->close();
+        }
+
+        if ($captcha_passed) {
+            $email    = trim($_POST['email']    ?? '');
+            $password = $_POST['password'] ?? '';
+
+            if (empty($email) || empty($password)) {
+                $error = 'Please enter your email and password.';
+            } else {
+                $stmt = $conn->prepare("SELECT member_id, full_name, password FROM members WHERE email = ?");
+                $stmt->bind_param("s", $email);
+                $stmt->execute();
+                $stmt->store_result();
+                $stmt->bind_result($member_id, $full_name, $hashed);
+
+                if ($stmt->fetch() && password_verify($password, $hashed)) {
+                    clearLoginAttempts($email);
+
+                    $_SESSION['member_id']  = $member_id;
+                    $_SESSION['full_name']  = $full_name;
+                    $_SESSION['email']      = $email;
+
+                    initializeSessionTimeout($timeout_minutes = 30);
+
+                    session_regenerate_id(true); // Prevent session fixation
+                    header("Location: " . BASE . "/my-bookings.php");
+                    exit();
+                } else {
+                    recordFailedLoginAttempt($email, $max_attempts = 5, $lockout_minutes = 15);
+                    $error = 'Invalid email or password.';
+                }
+                $stmt->close();
+            }
         }
     }
 }
@@ -86,6 +103,9 @@ require_once 'includes/header.php';
                 <label class="form-label" for="password">Password</label>
                 <input type="password" class="form-control" id="password" name="password"
                     placeholder="Your password" required>
+                <small class="text-muted-dn d-block mt-2">
+                    <a href="<?php echo BASE; ?>/forgot-password.php">Forgot your password?</a>
+                </small>
             </div>
 
             <div class="mb-4">

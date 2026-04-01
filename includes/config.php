@@ -6,12 +6,14 @@
 
 // Detect if running locally (XAMPP or Herd) vs production
 function detectBase() {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     $docRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? '');
     $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
 
     // XAMPP: document root ends in htdocs, site is in a subfolder
     if (stripos($docRoot, 'htdocs') !== false) {
-        return '/car_rental';
+        return $protocol.$host.'/car_rental';
     }
 
     // Laravel Herd: document root points directly to the site folder
@@ -20,7 +22,7 @@ function detectBase() {
     }
 
     // GCP production: document root is /var/www/html
-    return '';
+    return $protocol . $host;
 }
 
 if (!defined('BASE')) {
@@ -35,4 +37,10 @@ if (file_exists($envFile)) {
         $_ENV[trim($key)] = trim($val);
     }
 }
+
+date_default_timezone_set('Asia/Singapore');
+if (isset($conn)) {
+    $conn->query("SET time_zone = '+08:00'");
+}
+
 ?>

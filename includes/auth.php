@@ -27,8 +27,5 @@ function isAdmin() {
     return isset($_SESSION['admin_id']);
 }
 
-// XSS sanitization helper
-function h($str) {
-    return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
-}
+
 ?>
