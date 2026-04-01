@@ -35,7 +35,8 @@ $popular_cars = $conn->query("
 ?>
 
 <!-- Hero -->
-<section class="hero">
+<main id="main-content">
+<section class="hero" aria-label="Hero">
     <div class="hero-bg"></div>
     <div class="hero-grid-overlay"></div>
     <div class="container hero-content">
@@ -79,7 +80,7 @@ $popular_cars = $conn->query("
 </section>
 
 <!-- How It Works -->
-<section class="py-6" style="padding: 5rem 0;">
+<section class="py-6" aria-label="How it works" style="padding: 5rem 0;">
     <div class="container">
         <div class="text-center mb-5">
             <div class="section-eyebrow">Simple Process</div>
@@ -115,7 +116,7 @@ $popular_cars = $conn->query("
 </section>
 
 <!-- Featured Cars -->
-<section style="padding: 0 0 5rem;">
+<section aria-label="Featured cars" style="padding: 0 0 5rem;">
     <div class="container">
         <div class="d-flex justify-content-between align-items-end mb-4">
             <div>
@@ -163,7 +164,7 @@ $popular_cars = $conn->query("
 </section>
 
 <!-- ── Popular Cars Section ───────────────── -->
-<section class="py-5">
+<section class="py-5" aria-label="Popular cars">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -217,7 +218,7 @@ $popular_cars = $conn->query("
 
 <!-- Reviews -->
 <?php if (!empty($reviews)): ?>
-<section style="padding: 0 0 5rem;">
+<section aria-label="Customer reviews" style="padding: 0 0 5rem;">
     <div class="container">
         <div class="text-center mb-5">
             <div class="section-eyebrow">Real Experiences</div>
@@ -244,7 +245,7 @@ $popular_cars = $conn->query("
 <?php endif; ?>
 
 <!-- CTA Banner -->
-<section style="padding: 0 0 5rem;">
+<section aria-label="Get started" style="padding: 0 0 5rem;">
     <div class="container">
         <div style="background:linear-gradient(135deg,rgba(230,57,70,0.15),rgba(230,57,70,0.05));border:1px solid var(--border-acc);border-radius:var(--radius);padding:3.5rem;text-align:center;">
             <h2 class="section-title">Ready to Hit the Road?</h2>
@@ -254,4 +255,5 @@ $popular_cars = $conn->query("
     </div>
 </section>
 
+</main>
 <?php require_once 'includes/footer.php'; ?>

@@ -118,7 +118,8 @@ require_once 'includes/config.php';
 require_once 'includes/header.php';
 ?>
 
-<section class="page-header">
+<main id="main-content">
+<section class="page-header" aria-label="Create account header">
     <div class="container text-center">
         <div class="section-eyebrow">Join DriveNow</div>
         <h1 class="section-title">Create Your Account</h1>
@@ -315,4 +316,5 @@ function validateRegisterFormFull() {
 }
 </script>
 
+</main>
 <?php require_once 'includes/footer.php'; ?>

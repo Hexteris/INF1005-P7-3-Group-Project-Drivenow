@@ -169,7 +169,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once 'includes/header.php';
 ?>
 
-<section class="page-header">
+<main id="main-content">
+<section class="page-header" aria-label="Payment header">
     <div class="container">
         <div class="section-eyebrow">Secure Checkout</div>
         <h1 class="section-title">Complete Your Payment</h1>
@@ -331,7 +332,7 @@ require_once 'includes/header.php';
 
                     <!-- Cardholder Name -->
                     <div class="mb-3">
-                        <label class="form-label" style="color:var(--text-muted);font-size:.85rem;letter-spacing:.04em;">Cardholder Name</label>
+                        <label class="form-label" for="card_name" style="color:var(--text-muted);font-size:.85rem;letter-spacing:.04em;">Cardholder Name</label>
                         <input type="text" class="form-control pay-input" id="card_name" name="card_name"
                             placeholder="As shown on card"
                             value="<?php echo h($_POST['card_name'] ?? ''); ?>"
@@ -340,7 +341,7 @@ require_once 'includes/header.php';
 
                     <!-- Card Number -->
                     <div class="mb-3">
-                        <label class="form-label" style="color:var(--text-muted);font-size:.85rem;letter-spacing:.04em;">Card Number</label>
+                        <label class="form-label" for="card_number" style="color:var(--text-muted);font-size:.85rem;letter-spacing:.04em;">Card Number</label>
                         <div style="position:relative;">
                             <input type="text" class="form-control pay-input" id="card_number" name="card_number"
                                 placeholder="1234 5678 9012 3456"
@@ -353,7 +354,7 @@ require_once 'includes/header.php';
                     <!-- Expiry + CVV -->
                     <div class="row g-3 mb-4">
                         <div class="col-6">
-                            <label class="form-label" style="color:var(--text-muted);font-size:.85rem;letter-spacing:.04em;">Expiry Date</label>
+                            <label class="form-label" for="card_expiry" style="color:var(--text-muted);font-size:.85rem;letter-spacing:.04em;">Expiry Date</label>
                             <input type="text" class="form-control pay-input" id="card_expiry" name="card_expiry"
                                 placeholder="MM/YY" maxlength="5" autocomplete="cc-exp" required
                                 value="<?php echo h($_POST['card_expiry'] ?? ''); ?>">
@@ -386,7 +387,7 @@ require_once 'includes/header.php';
         <!-- Booking Summary -->
         <div class="col-lg-5">
             <div class="booking-summary-card">
-                <h5 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;margin-bottom:1.2rem;">Order Summary</h5>
+                <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;margin-bottom:1.2rem;">Order Summary</h2>
 
                 <div style="background:var(--bg-raised);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;">
                     <div style="font-weight:600;margin-bottom:.3rem;"><?php echo h($booking['make'].' '.$booking['model']); ?></div>
@@ -625,4 +626,5 @@ document.getElementById('paymentForm').addEventListener('submit', function() {
 });
 </script>
 
+</main>
 <?php require_once 'includes/footer.php'; ?>

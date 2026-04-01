@@ -1,8 +1,7 @@
 /* =============================================
    DriveNow – Custom Stylesheet
    Theme: Dark Premium Automotive
-   ============================================= */
-
+============================================= */
 
 :root {
     --bg-base:    #090909;
@@ -19,6 +18,8 @@
     --radius:     12px;
     --radius-sm:  8px;
     --transition: 0.25s ease;
+    --accent-text: #f04550; 
+    --code-text: #e85aa0;
 }
 
 
@@ -201,7 +202,7 @@ a:hover { opacity: 0.8; }
 
 
 .btn-hero-primary {
-    background: var(--accent);
+    background: #c1121f;
     color: #fff;
     font-size: 1rem;
     font-weight: 600;
@@ -361,9 +362,9 @@ a:hover { opacity: 0.8; }
 
 
 .badge-economy  { background: rgba(52,168,83,0.15);  color: #34a853; border: 1px solid rgba(52,168,83,0.3); }
-.badge-comfort  { background: rgba(66,133,244,0.15); color: #4285f4; border: 1px solid rgba(66,133,244,0.3); }
+.badge-comfort  { background: rgba(66,133,244,0.15); color: #7ab3ff; border: 1px solid rgba(66,133,244,0.3); }
 .badge-suv      { background: rgba(251,188,5,0.15);  color: #fbbc05; border: 1px solid rgba(251,188,5,0.3); }
-.badge-premium  { background: rgba(230,57,70,0.15);  color: #e63946; border: 1px solid rgba(230,57,70,0.3); }
+.badge-premium  { background: rgba(230,57,70,0.15);  color: #ff6b76; border: 1px solid rgba(230,57,70,0.3); }
 
 
 .car-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
@@ -557,8 +558,8 @@ a:hover { opacity: 0.8; }
 }
 .status-pending   { background: rgba(251,188,5,0.15); color: #fbbc05; }
 .status-confirmed { background: rgba(52,168,83,0.15); color: #34a853; }
-.status-cancelled { background: rgba(249,65,68,0.15); color: #f94144; }
-.status-completed { background: rgba(66,133,244,0.15); color: #4285f4; }
+.status-cancelled { background: rgba(249,65,68,0.15);  color: #ff6e70; }
+.status-completed { background: rgba(66,133,244,0.15); color: #7ab3ff; }
 
 
 /* ---- Admin Panel ---- */
@@ -583,6 +584,14 @@ a:hover { opacity: 0.8; }
     margin-bottom: 1rem;
 }
 
+.admin-nav-section {
+    display: block;
+    padding: 0 1.5rem 0.75rem;
+    margin-top: 1rem;
+    color: #a8a8a8;
+    font-size: 1.0rem;
+    letter-spacing: 0.04em;
+}
 
 .admin-nav-link {
     display: flex;
@@ -699,7 +708,8 @@ a:hover { opacity: 0.8; }
 .footer-heading { color: var(--text-muted); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
 .footer-links { list-style: none; padding: 0; margin: 0; }
 .footer-links li { margin-bottom: 0.5rem; }
-.footer-links a { color: var(--text-muted); font-size: 0.88rem; transition: color var(--transition); }
+.footer-links a { color: var(--text-muted); font-size: 0.88rem; transition: color var(--transition); text-decoration: underline; }
+.dn-form-card p a { text-decoration: underline; }
 .footer-links a:hover { color: var(--text); }
 .footer-tagline { color: var(--text-muted); font-size: 0.88rem; }
 .footer-divider { border-color: var(--border); margin: 2rem 0 1rem; }
@@ -758,3 +768,4 @@ a:hover { opacity: 0.8; }
     .admin-sidebar { display: none; }
     .admin-content { margin-left: 0; }
 }
+

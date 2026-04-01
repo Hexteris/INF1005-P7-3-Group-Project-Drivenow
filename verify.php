@@ -54,7 +54,8 @@ if ($token !== '') {
 require_once 'includes/header.php';
 ?>
 
-<section class="page-header">
+<main id="main-content">
+<section class="page-header" aria-label="Email verification header">
     <div class="container text-center">
         <div class="section-eyebrow">Account Verification</div>
         <h1 class="section-title">Email Verification</h1>
@@ -100,4 +101,5 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+</main>
 <?php require_once 'includes/footer.php'; ?>

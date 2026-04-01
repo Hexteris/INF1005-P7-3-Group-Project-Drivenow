@@ -35,9 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_id'])) {
     $stmt->close();
 }
 
-// Update bookings to 'completed' when end_time has passed
 date_default_timezone_set('Asia/Singapore');
 $now = date('Y-m-d H:i:s');
+
+// Update bookings to 'completed' when end_time has passed
 $autoComplete = $conn->prepare("
     UPDATE bookings b
     INNER JOIN payments p ON b.booking_id = p.booking_id
@@ -50,6 +51,20 @@ $autoComplete = $conn->prepare("
 $autoComplete->bind_param("is", $member_id, $now);
 $autoComplete->execute();
 $autoComplete->close();
+
+// Cancel unpaid bookings when start_time has passed
+$autoCancel = $conn->prepare("
+    UPDATE bookings b
+    LEFT JOIN payments p ON b.booking_id = p.booking_id
+    SET b.status = 'cancelled'
+    WHERE b.member_id = ?
+      AND b.status = 'pending'
+      AND b.start_time < ?
+      AND (p.status IS NULL OR p.status != 'paid')
+");
+$autoCancel->bind_param("is", $member_id, $now);
+$autoCancel->execute();
+$autoCancel->close();
 
 // Fetch bookings
 $stmt = $conn->prepare("
@@ -80,7 +95,8 @@ require_once 'includes/header.php';
 [$msgType, $msgText] = !empty($message) ? explode(':', $message, 2) : ['', ''];
 ?>
 
-<section class="page-header">
+<main id="main-content">
+<section class="page-header" aria-label="My bookings header">
     <div class="container">
         <div class="section-eyebrow">Dashboard</div>
         <h1 class="section-title">My Bookings</h1>
@@ -126,15 +142,15 @@ require_once 'includes/header.php';
     <?php endif; ?>
 
     <div class="mb-4 p-3" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);">
-        <h5>Your Referral Code</h5>
+        <h2 class="h5">Your Referral Code</h2>
         <div class="d-flex align-items-center gap-2">
             <span id="referralCode" style="font-weight:600;font-size:1.2rem;">
                 <?php echo h($myReferralCode); ?>
             </span>
             <?php if (!empty($myReferralCode)): ?>
             <button class="btn btn-outline-secondary btn-sm" id="copyBtn" onclick="copyReferralCode()" 
-                    style="padding:.1rem .3rem;">
-                <i class="bi bi-clipboard" id="copyIcon"></i>
+                    style="padding:.1rem .3rem;" aria-label="Copy referral code">
+                <i class="bi bi-clipboard" id="copyIcon" aria-hidden="true"></i>
             </button>
         <?php endif; ?>
         </div>
@@ -145,21 +161,26 @@ require_once 'includes/header.php';
 
     <script>
         function copyReferralCode() {
-            const code = document.getElementById('referralCode').innerText;
+            const code = document.getElementById('referralCode').innerText.trim();
             const icon = document.getElementById('copyIcon');
+            const tmp = document.createElement('textarea');
 
-            navigator.clipboard.writeText(code).then(() => {
-                // Change to checkmark
+            tmp.value = code;
+            tmp.style.position = 'fixed';
+            tmp.style.opacity = '0';
+            document.body.appendChild(tmp);
+            tmp.select();
+
+            try {
+                document.execCommand('copy');
                 icon.className = 'bi bi-check2';
-        
-                // Change back to clipboard after 2 seconds
-                setTimeout(() => {
-                    icon.className = 'bi bi-clipboard';
-                }, 2000);
-            }).catch(err => {
+                setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 2000);
+            } catch (err) {
                 console.error('Failed to copy:', err);
                 alert('Failed to copy code');
-            });
+            } finally {
+                document.body.removeChild(tmp);
+            }
         }
     </script>
 
@@ -171,13 +192,13 @@ require_once 'includes/header.php';
     <?php if (empty($bookings)): ?>
         <div class="text-center py-5">
             <div style="font-size:4rem;">📋</div>
-            <h4 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;margin-top:1rem;">No Bookings Yet</h4>
+            <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;margin-top:1rem;">No Bookings Yet</h2>
             <p class="text-muted-dn">Browse our fleet and make your first booking!</p>
             <a href="<?php echo BASE; ?>/cars.php" class="btn btn-accent mt-2">Browse Cars</a>
         </div>
     <?php else: ?>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
-            <div style="overflow-x:auto;">
+            <div style="overflow-x:auto;" tabindex="0">
                 <table class="dn-table">
                     <thead>
                         <tr>
@@ -215,7 +236,7 @@ require_once 'includes/header.php';
                             </td>
                             <td>
                                 <div class="d-flex gap-2">
-                                    <?php if ($b['status'] === 'pending' && empty($b['payment_id'])): ?>
+                                    <?php if ($b['status'] === 'pending' && empty($b['payment_id']) && $b['start_time'] > $now): ?>
                                         <a href="<?php echo BASE; ?>/payment.php?booking_id=<?php echo (int)$b['booking_id']; ?>"
                                             class="btn btn-accent btn-sm">
                                             <i class="bi bi-credit-card me-1"></i>Pay Now
@@ -246,4 +267,5 @@ require_once 'includes/header.php';
     <?php endif; ?>
 </div>
 
+</main>
 <?php require_once 'includes/footer.php'; ?>

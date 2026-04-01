@@ -2,6 +2,9 @@
 $pageTitle = 'Dashboard';
 require_once '../includes/db-connect.php';
 require_once 'admin-header.php';
+?>
+<main id="main-content" aria-label="Dashboard">
+<?php
 
 $totalCars     = $conn->query("SELECT COUNT(*) AS n FROM cars")->fetch_assoc()['n'];
 $availableCars = $conn->query("SELECT COUNT(*) AS n FROM cars WHERE is_available=1")->fetch_assoc()['n'];
@@ -52,7 +55,8 @@ $recent = $conn->query("
                 <div class="stat-card-val text-accent"><?php echo $totalCars; ?></div>
                 <div class="stat-card-label">Total Cars</div>
             </div>
-            <div class="stat-card-icon"><i class="bi bi-car-front"></i></div>
+            <!-- FIX 5: aria-hidden on decorative icons -->
+            <div class="stat-card-icon" aria-hidden="true"><i class="bi bi-car-front"></i></div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
@@ -61,7 +65,7 @@ $recent = $conn->query("
                 <div class="stat-card-val"><?php echo $totalBookings; ?></div>
                 <div class="stat-card-label">Total Bookings</div>
             </div>
-            <div class="stat-card-icon"><i class="bi bi-calendar-check"></i></div>
+            <div class="stat-card-icon" aria-hidden="true"><i class="bi bi-calendar-check"></i></div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
@@ -70,7 +74,7 @@ $recent = $conn->query("
                 <div class="stat-card-val"><?php echo $totalMembers; ?></div>
                 <div class="stat-card-label">Members</div>
             </div>
-            <div class="stat-card-icon"><i class="bi bi-people"></i></div>
+            <div class="stat-card-icon" aria-hidden="true"><i class="bi bi-people"></i></div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
@@ -79,7 +83,7 @@ $recent = $conn->query("
                 <div class="stat-card-val" style="font-size:1.8rem;">S$<?php echo number_format($revenue, 0); ?></div>
                 <div class="stat-card-label">Total Revenue</div>
             </div>
-            <div class="stat-card-icon"><i class="bi bi-cash-stack"></i></div>
+            <div class="stat-card-icon" aria-hidden="true"><i class="bi bi-cash-stack"></i></div>
         </div>
     </div>
 </div>
@@ -88,17 +92,28 @@ $recent = $conn->query("
 <div class="row g-3 mb-4">
     <div class="col-md-6">
         <div class="stat-card">
-            <div class="d-flex justify-content-between">
-                <div><span style="color:#34a853;font-weight:600;"><?php echo $availableCars; ?></span> available / <span style="color:#f94144;"><?php echo $totalCars - $availableCars; ?></span> unavailable cars</div>
-                <a href="<?php echo BASE; ?>/admin/manage-cars.php" style="font-size:.85rem;">Manage →</a>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span style="color:#34a853;font-weight:600;"><?php echo $availableCars; ?></span> available /
+                    <span style="color:#f94144;"><?php echo $totalCars - $availableCars; ?></span> unavailable cars
+                </div>
+                <!-- FIX 1+2: color lifted to #f4646e (passes 4.5:1 on #181818); aria-label added -->
+                <a href="<?php echo BASE; ?>/admin/manage-cars.php"
+                   style="font-size:.85rem;color:#f4646e;"
+                   aria-label="Manage cars">Manage →</a>
             </div>
         </div>
     </div>
     <div class="col-md-6">
         <div class="stat-card">
-            <div class="d-flex justify-content-between">
-                <div><span style="color:#fbbc05;font-weight:600;"><?php echo $pendingCount; ?></span> pending bookings awaiting confirmation</div>
-                <a href="<?php echo BASE; ?>/admin/manage-bookings.php" style="font-size:.85rem;">Manage →</a>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span style="color:#fbbc05;font-weight:600;"><?php echo $pendingCount; ?></span> pending bookings awaiting confirmation
+                </div>
+                <!-- FIX 1+3: same colour fix; descriptive aria-label -->
+                <a href="<?php echo BASE; ?>/admin/manage-bookings.php"
+                   style="font-size:.85rem;color:#f4646e;"
+                   aria-label="Manage bookings">Manage →</a>
             </div>
         </div>
     </div>
@@ -109,9 +124,10 @@ $recent = $conn->query("
     <div class="col-md-6">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);">
             <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);">
-                <h5 style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;margin:0;">
-                    <i class="bi bi-car-front text-accent me-2"></i>Most Popular Cars
-                </h5>
+                <!-- FIX 4: h5 → h3 (no heading levels skipped after h2) -->
+                <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;margin:0;">
+                    <i class="bi bi-car-front text-accent me-2" aria-hidden="true"></i>Most Popular Cars
+                </h3>
             </div>
             <div style="padding:.5rem 0;">
                 <?php foreach ($popular_cars as $i => $car): ?>
@@ -129,9 +145,10 @@ $recent = $conn->query("
     <div class="col-md-6">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);">
             <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);">
-                <h5 style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;margin:0;">
-                    <i class="bi bi-people text-accent me-2"></i>Top Customers
-                </h5>
+                <!-- FIX 4: h5 → h3 -->
+                <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;margin:0;">
+                    <i class="bi bi-people text-accent me-2" aria-hidden="true"></i>Top Customers
+                </h3>
             </div>
             <div style="padding:.5rem 0;">
                 <?php foreach ($top_customers as $i => $cust): ?>
@@ -151,13 +168,17 @@ $recent = $conn->query("
 <!-- Recent Bookings -->
 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);">
     <div style="padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-        <h5 style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;margin:0;">Recent Bookings</h5>
-        <a href="<?php echo BASE; ?>/admin/manage-bookings.php" style="font-size:.85rem;">View All →</a>
+        <!-- FIX 4: h5 → h3 -->
+        <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;margin:0;">Recent Bookings</h3>
+        <!-- FIX 1+3: colour fix + descriptive aria-label -->
+        <a href="<?php echo BASE; ?>/admin/manage-bookings.php"
+           style="font-size:.85rem;color:#f4646e;"
+           aria-label="View all bookings">View All →</a>
     </div>
     <div style="overflow-x:auto;">
         <table class="dn-table">
             <thead>
-                <tr><th>#</th><th>Member</th><th>Car</th><th>Pickup</th><th>Cost</th><th>Status</th></tr>
+                <tr><th scope="col">#</th><th scope="col">Member</th><th scope="col">Car</th><th scope="col">Pickup</th><th scope="col">Cost</th><th scope="col">Status</th></tr>
             </thead>
             <tbody>
                 <?php foreach ($recent as $b): ?>
@@ -175,4 +196,5 @@ $recent = $conn->query("
     </div>
 </div>
 
+</main>
 <?php require_once 'admin-footer.php'; ?>

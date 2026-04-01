@@ -60,7 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once 'includes/header.php';
 ?>
 
-<section class="page-header">
+<main id="main-content">
+<section class="page-header" aria-label="Sign in">
     <div class="container text-center">
         <div class="section-eyebrow">Welcome Back</div>
         <h1 class="section-title">Sign In to DriveNow</h1>
@@ -98,7 +99,7 @@ require_once 'includes/header.php';
 
         <hr class="divider my-4">
         <p class="text-center text-muted-dn" style="font-size:0.9rem;">
-            Don't have an account? <a href="<?php echo BASE; ?>/register.php">Register →</a>
+            Don't have an account? <a href="<?php echo BASE; ?>/register.php" style="text-decoration:underline;">Register →</a>
         </p>
     </div>
 </div>
@@ -125,4 +126,5 @@ function validateLoginFormFull() {
 }
 </script>
 
+</main>
 <?php require_once 'includes/footer.php'; ?>
