@@ -7,7 +7,7 @@
 // Detect if running locally (XAMPP or Herd) vs production
 function detectBase() {
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $host = $_SERVER['HTTP_HOST'] ?? 'http://35.212.138.18';
     $docRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? '');
     $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
 
