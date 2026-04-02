@@ -156,6 +156,7 @@ $isAdmin    = isAdmin();
     }
     </style>
     <?php endif; ?>
+    <?php if (!empty($extraHead)) echo $extraHead; ?>
 </head>
 <body>
 

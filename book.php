@@ -189,9 +189,7 @@ $hasCoords  = !empty($car['lat']) && !empty($car['lng']);
 $pickupLat  = $hasCoords ? (float)$car['lat'] : null;
 $pickupLng  = $hasCoords ? (float)$car['lng'] : null;
 
-require_once 'includes/header.php';
-?>
-
+$extraHead = <<<'CSS'
 <style>
 /* ── Right panel redesign ─────────────────────────────────── */
 .booking-panel {
@@ -382,6 +380,10 @@ require_once 'includes/header.php';
 }
 .bp-open-maps:hover { border-color: #e63946; color: #e63946; }
 </style>
+CSS;
+
+require_once 'includes/header.php';
+?>
 
 <main id="main-content">
 <section class="page-header" aria-label="Book a car">
@@ -720,11 +722,27 @@ const now = new Date();
 let calYear = now.getFullYear(), calMonth = now.getMonth();
 
 function dayStatus(y, m, d) {
-    const s = new Date(y,m,d,0,0), e = new Date(y,m,d,23,59);
-    const hits = BOOKED_RANGES.filter(r => r.start < e && r.end > s);
+    const dayStart = new Date(y, m, d, 0, 0);
+    const dayEnd   = new Date(y, m, d, 23, 59);
+
+    // No bookings touching this day at all → free
+    const hits = BOOKED_RANGES.filter(r => r.start < dayEnd && r.end > dayStart);
     if (!hits.length) return 'free';
-    const booked = hits.reduce((acc,r) => acc + (Math.min(r.end,e) - Math.max(r.start,s)), 0);
-    return booked >= 23*3600*1000 ? 'full' : 'partial';
+
+    // Earliest we can actually start a booking on this day
+    const earliest  = new Date(Math.max(getMinStart().getTime(), dayStart.getTime()));
+
+    // Scan forward in 15-min steps to find any viable 1-hour slot
+    let candidate = earliest;
+    while (candidate < dayEnd) {
+        const slotEnd = new Date(candidate.getTime() + MIN_MINS * 60000);
+        if (!overlaps(candidate, slotEnd)) {
+            return 'partial'; // at least one viable slot exists
+        }
+        candidate = new Date(candidate.getTime() + STEP_MINS * 60000);
+    }
+
+    return 'full'; // no viable slot found for the whole day
 }
 
 function renderCalendar() {
@@ -743,7 +761,8 @@ function renderCalendar() {
 
     const firstDow   = new Date(calYear, calMonth, 1).getDay();
     const daysInMon  = new Date(calYear, calMonth+1, 0).getDate();
-    const todayFloor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const _now       = new Date();
+    const todayFloor = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate());
     const minStart   = getMinStart();
 
     const selS = document.getElementById('start_time').value ? new Date(document.getElementById('start_time').value) : null;
@@ -784,12 +803,24 @@ function renderCalendar() {
 
         if (!isPast && status !== 'full') {
             el.onclick = () => {
-                const p    = n => String(n).padStart(2,'0');
-                const base = `${calYear}-${p(calMonth+1)}-${p(d)}`;
-                let startHH = '09', startMM = '00';
-                if (isToday) { startHH = p(minStart.getHours()); startMM = p(minStart.getMinutes()); }
-                const startVal = `${base}T${startHH}:${startMM}`;
-                const endDt    = new Date(new Date(startVal).getTime() + MIN_MINS * 60000);
+                // Find the first viable slot on this day (respects minStart + existing bookings)
+                const dayStart  = new Date(calYear, calMonth, d, 0, 0);
+                const dayEnd    = new Date(calYear, calMonth, d, 23, 59);
+                const earliest  = new Date(Math.max(getMinStart().getTime(), dayStart.getTime()));
+                let   candidate = earliest;
+                let   startVal  = null;
+
+                while (candidate < dayEnd) {
+                    const slotEnd = new Date(candidate.getTime() + MIN_MINS * 60000);
+                    if (!overlaps(candidate, slotEnd)) {
+                        startVal = toInputVal(candidate);
+                        break;
+                    }
+                    candidate = new Date(candidate.getTime() + STEP_MINS * 60000);
+                }
+
+                if (!startVal) return; // no viable slot (shouldn't reach here if dayStatus is correct)
+                const endDt = new Date(new Date(startVal).getTime() + MIN_MINS * 60000);
                 document.getElementById('start_time').value = startVal;
                 document.getElementById('end_time').value   = toInputVal(endDt);
                 onTimeChange();

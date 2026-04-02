@@ -184,7 +184,7 @@ require_once 'includes/header.php';
         <div class="col-lg-8">
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
                 <div style="padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);">
-                    <h5 style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;margin:0;">Points History</h5>
+                    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;margin:0;">Points History</h2>
                 </div>
 
                 <?php if (empty($history)): ?>
