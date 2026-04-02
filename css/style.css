@@ -726,7 +726,7 @@ a:hover { opacity: 0.8; }
 .bg-card-dn { background: var(--bg-card); }
 .border-dn { border-color: var(--border) !important; }
 .divider { border-color: var(--border); }
-
+.text-muted-dn a {color: var(--accent-text);}
 
 /* ---- About Page ---- */
 .about-hero { padding: 5rem 0 4rem; border-bottom: 1px solid var(--border); }
