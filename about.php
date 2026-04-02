@@ -146,20 +146,6 @@ require_once 'includes/header.php';
     </div>
 </section>
 
-<!-- CTA -->
-<section class="about-cta">
-    <div class="container text-center">
-        <h2 class="about-cta-title">Ready to hit the road?</h2>
-        <p class="about-cta-sub">
-            Join our growing community of Singaporeans who drive on their own terms.
-        </p>
-        <div class="d-flex gap-3 justify-content-center flex-wrap">
-            <a href="<?php echo BASE; ?>cars.php" class="btn btn-accent btn-lg">Browse Cars</a>
-            <a href="<?php echo BASE; ?>register.php" class="btn btn-outline-light btn-lg">Create Account</a>
-        </div>
-    </div>
-</section>
-
 </main>
 
 <?php require_once 'includes/footer.php'; ?>
