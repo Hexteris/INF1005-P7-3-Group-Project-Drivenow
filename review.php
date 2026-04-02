@@ -67,14 +67,20 @@ require_once 'includes/header.php';
 </section>
 
 <div class="container pb-5">
-    <div class="dn-form-card" style="max-width:550px;">
-        <div class="d-flex align-items-center gap-3 mb-4" style="border-bottom:1px solid var(--border);padding-bottom:1.2rem;">
-            <div style="font-size:3rem;"><?php echo ['Economy'=>'🚗','Comfort'=>'🚙','SUV'=>'🚐','Premium'=>'🏎️'][$car['category']] ?? '🚗'; ?></div>
-            <div>
-                <div class="car-name"><?php echo h($car['make'].' '.$car['model']); ?></div>
-                <div class="car-plate"><?php echo h($car['plate_no']); ?></div>
-            </div>
-        </div>
+    <div class="mb-4" style="border-bottom:1px solid var(--border);padding-bottom:1.2rem;">
+    <div class="car-name"><?php echo h($car['make'].' '.$car['model']); ?></div>
+    <div class="car-plate"><?php echo h($car['plate_no']); ?></div>
+    <span style="
+        display:inline-block;margin-top:8px;
+        font-size:.75rem;font-weight:700;letter-spacing:.05em;
+        padding:3px 10px;border-radius:20px;
+        background:#c0282f;
+        color:#ffffff;"
+        role="img"
+        aria-label="Vehicle category: <?php echo h($car['category']); ?>">
+        <?php echo h($car['category']); ?>
+    </span>
+</div>  
 
         <?php if (!$hasBooking): ?>
             <div class="alert-error"><i class="bi bi-exclamation-triangle me-2"></i>You can only review cars you've rented and returned.</div>
@@ -114,6 +120,7 @@ require_once 'includes/header.php';
             </form>
         <?php endif; ?>
     </div>
+</div>
 </div>
 
 </main>
