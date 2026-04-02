@@ -78,9 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors['full_name'] = 'Full name must be at least 2 characters.';
         if (!filter_var($email, FILTER_VALIDATE_EMAIL))
             $errors['email'] = 'Please enter a valid email address.';
-        $pwErrors = validatePasswordStrength($password);
-        if (!empty($pwErrors))
-            $errors['password'] = $pwErrors[0];
+        if (strlen($password) < 8 || !preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/[0-9]/', $password) || !preg_match('/[^A-Za-z0-9]/', $password))
+            $errors['password'] = 'Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.';
         if ($password !== $confirm)
             $errors['confirm_password'] = 'Passwords do not match.';
         if (!empty($licence_no) && !preg_match('/^\d{9}[A-Za-z]$/', $licence_no))
