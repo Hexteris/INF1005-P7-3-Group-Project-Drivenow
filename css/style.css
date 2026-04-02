@@ -7,12 +7,12 @@
     --bg-base:    #090909;
     --bg-surface: #111111;
     --bg-card:    #181818;
-    --bg-raised:  #222222;
+    --bg-raised:  #666666;
     --accent:     #e63946;
     --accent-dim: rgba(230, 57, 70, 0.15);
     --text:       #f0f0f0;
-    --text-muted: #9a9a9a;
-    --text-dim:    #818181; 
+    --text-muted: #eeeeee;
+    --text-dim:   #b3b3b3; 
     --border:     rgba(255,255,255,0.07);
     --border-acc: rgba(230, 57, 70, 0.4);
     --radius:     12px;
@@ -726,7 +726,7 @@ a:hover { opacity: 0.8; }
 .bg-card-dn { background: var(--bg-card); }
 .border-dn { border-color: var(--border) !important; }
 .divider { border-color: var(--border); }
-
+.text-muted-dn a {color: var(--accent-text);}
 
 /* ---- About Page ---- */
 .about-hero { padding: 5rem 0 4rem; border-bottom: 1px solid var(--border); }
