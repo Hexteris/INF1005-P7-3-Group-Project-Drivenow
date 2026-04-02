@@ -78,8 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors['full_name'] = 'Full name must be at least 2 characters.';
         if (!filter_var($email, FILTER_VALIDATE_EMAIL))
             $errors['email'] = 'Please enter a valid email address.';
-        if (strlen($password) < 8 || !preg_match('/[!@#$%^&*(),.?":{}|<>_\-]/', $password))
-            $errors['password'] = 'Password must be at least 8 characters and include at least 1 special character (e.g. @, #, !).';
+        $pwErrors = validatePasswordStrength($password);
+        if (!empty($pwErrors))
+            $errors['password'] = $pwErrors[0];
         if ($password !== $confirm)
             $errors['confirm_password'] = 'Passwords do not match.';
         if (!empty($licence_no) && !preg_match('/^\d{9}[A-Za-z]$/', $licence_no))
@@ -117,7 +118,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once 'includes/config.php';
 require_once 'includes/header.php';
 ?>
-
 
 <main id="main-content">
 <section class="page-header" aria-label="Create account header">
@@ -198,6 +198,15 @@ require_once 'includes/header.php';
                     <span id="req_length" class="req-hint">
                         <i class="bi bi-circle req-icon" style="font-size:8px;"></i> At least 8 characters
                     </span>
+                    <span id="req_upper" class="req-hint">
+                        <i class="bi bi-circle req-icon" style="font-size:8px;"></i> At least 1 uppercase letter (A–Z)
+                    </span>
+                    <span id="req_lower" class="req-hint">
+                        <i class="bi bi-circle req-icon" style="font-size:8px;"></i> At least 1 lowercase letter (a–z)
+                    </span>
+                    <span id="req_number" class="req-hint">
+                        <i class="bi bi-circle req-icon" style="font-size:8px;"></i> At least 1 number (0–9)
+                    </span>
                     <span id="req_special" class="req-hint">
                         <i class="bi bi-circle req-icon" style="font-size:8px;"></i> At least 1 special character (e.g. @, #, !)
                     </span>
@@ -232,17 +241,48 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+<style>
+.req-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .78rem;
+    color: var(--text-muted);
+    transition: color .2s;
+}
+.req-hint .req-icon { transition: all .2s; }
+.req-hint.req-pass {
+    color: #34a853;
+}
+.req-hint.req-pass .req-icon::before {
+    content: "\f26a"; /* bi-check-circle-fill */
+    font-family: "bootstrap-icons";
+    color: #34a853;
+}
+.req-hint.req-fail {
+    color: #f94144;
+}
+.req-hint.req-fail .req-icon::before {
+    content: "\f623"; /* bi-x-circle */
+    font-family: "bootstrap-icons";
+    color: #f94144;
+}
+</style>
+
 <script>
 function validatePassword(input) {
     const val = input.value;
     const lenOk     = val.length >= 8;
-    const specialOk = /[!@#$%^&*(),.?":{}|<>_\-]/.test(val);
+    const upperOk   = /[A-Z]/.test(val);
+    const lowerOk   = /[a-z]/.test(val);
+    const numberOk  = /[0-9]/.test(val);
+    const specialOk = /[^A-Za-z0-9]/.test(val);
 
-    const reqLen     = document.getElementById('req_length');
-    const reqSpecial = document.getElementById('req_special');
-
-    setReq(reqLen,     lenOk);
-    setReq(reqSpecial, specialOk);
+    setReq(document.getElementById('req_length'),  lenOk);
+    setReq(document.getElementById('req_upper'),   upperOk);
+    setReq(document.getElementById('req_lower'),   lowerOk);
+    setReq(document.getElementById('req_number'),  numberOk);
+    setReq(document.getElementById('req_special'), specialOk);
 }
 
 function validateLicence(input) {
