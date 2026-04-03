@@ -302,7 +302,7 @@ $extraHead = <<<'CSS'
     font-weight: 600;
     color: var(--text);
 }
-.bp-stat-value.accent { color: #e63946; }
+.bp-stat-value.accent { color: #f94144; }
 
 /* Map section */
 .bp-map-header {
