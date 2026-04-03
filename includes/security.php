@@ -1,17 +1,4 @@
 <?php
-/**
- * Security Helper Functions - Minimal Version
- * Login Rate Limiting, Session Timeout, Password Recovery
- */
-
-// ============================================================================
-// SESSION TIMEOUT MANAGEMENT
-// ============================================================================
-
-/**
- * Initialize session timeout tracking
- * Call this after successful login
- */
 function initializeSessionTimeout($timeout_minutes = 30) {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -21,10 +8,6 @@ function initializeSessionTimeout($timeout_minutes = 30) {
     $_SESSION['last_activity'] = time();
 }
 
-/**
- * Check if session has timed out
- * Returns true if timed out, false if still active
- */
 function isSessionTimedOut() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -45,9 +28,6 @@ function isSessionTimedOut() {
     return false;
 }
 
-/**
- * Get remaining session time in seconds
- */
 function getSessionTimeRemaining() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -63,14 +43,6 @@ function getSessionTimeRemaining() {
     return max(0, $remaining);
 }
 
-// ============================================================================
-// LOGIN RATE LIMITING
-// ============================================================================
-
-/**
- * Check if login is rate limited for an email
- * Returns array: ['limited' => true/false, 'attempts' => int, 'remaining_seconds' => int]
- */
 function checkLoginRateLimit($email, $max_attempts = 5, $lockout_minutes = 15) {
     $cache_key = 'login_attempts_' . md5($email);
     $file_path = sys_get_temp_dir() . '/' . $cache_key . '.txt';
@@ -111,9 +83,6 @@ function checkLoginRateLimit($email, $max_attempts = 5, $lockout_minutes = 15) {
     ];
 }
 
-/**
- * Record a failed login attempt
- */
 function recordFailedLoginAttempt($email, $max_attempts = 5, $lockout_minutes = 15) {
     $cache_key = 'login_attempts_' . md5($email);
     $file_path = sys_get_temp_dir() . '/' . $cache_key . '.txt';
@@ -141,9 +110,6 @@ function recordFailedLoginAttempt($email, $max_attempts = 5, $lockout_minutes = 
     chmod($file_path, 0600);
 }
 
-/**
- * Clear failed login attempts for an email
- */
 function clearLoginAttempts($email) {
     $cache_key = 'login_attempts_' . md5($email);
     $file_path = sys_get_temp_dir() . '/' . $cache_key . '.txt';
@@ -153,13 +119,6 @@ function clearLoginAttempts($email) {
     }
 }
 
-// ============================================================================
-// PASSWORD RECOVERY
-// ============================================================================
-
-/**
- * Generate password reset token
- */
 function generateResetToken() {
     try {
         return bin2hex(random_bytes(32));
@@ -170,9 +129,6 @@ function generateResetToken() {
     }
 }
 
-/**
- * Store password reset token in database
- */
 function storeResetToken($conn, $email, $token, $expires_minutes = 60) {
     $expires_minutes = max(1, (int)$expires_minutes);
     $expiration = date('Y-m-d H:i:s', time() + ($expires_minutes * 60));
@@ -206,9 +162,6 @@ function storeResetToken($conn, $email, $token, $expires_minutes = 60) {
     return $updated;
 }
 
-/**
- * Verify and retrieve password reset token
- */
 function verifyResetToken($conn, $token) {
     $stmt = $conn->prepare(
         "SELECT member_id, email, reset_expires
@@ -244,9 +197,6 @@ function verifyResetToken($conn, $token) {
     return $row;
 }
 
-/**
- * Update password and clear reset token
- */
 function updatePasswordWithToken($conn, $token, $new_password) {
     $hashed = password_hash($new_password, PASSWORD_DEFAULT);
 
@@ -279,9 +229,6 @@ function updatePasswordWithToken($conn, $token, $new_password) {
     return $updated;
 }
 
-/**
- * Clear reset token for an email
- */
 function clearResetToken($conn, $email) {
     $stmt = $conn->prepare(
         "UPDATE members
@@ -306,22 +253,12 @@ function clearResetToken($conn, $email) {
     return true;
 }
 
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-/**
- * HTML escape helper
- */
 if (!function_exists('h')) {
     function h($str) {
         return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
     }
 }
 
-/**
- * Validate password strength
- */
 function validatePasswordStrength($password) {
     $errors = [];
     
@@ -344,9 +281,6 @@ function validatePasswordStrength($password) {
     return $errors;
 }
 
-/**
- * Send email helper
- */
 function sendEmail($to, $subject, $html_message) {
     $headers = "MIME-Version: 1.0" . "\r\n";
     $headers .= "Content-type: text/html; charset=UTF-8" . "\r\n";

@@ -119,8 +119,8 @@ require_once 'includes/header.php';
                             name="password"
                             placeholder="Minimum 8 characters"
                             required>
-                        <button type="button" class="btn btn-link" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: none; background: none; cursor: pointer;" onclick="togglePasswordVisibility('password')">
-                            <i class="bi bi-eye"></i>
+                        <button type="button" class="btn btn-link" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: none; background: none; cursor: pointer;" onclick="togglePasswordVisibility('password')" aria-label="Show password">
+                            <i class="bi bi-eye" aria-hidden="true"></i>
                         </button>
                     </div>
                     <?php if (!empty($password_error)): ?>
@@ -128,14 +128,14 @@ require_once 'includes/header.php';
                             <?php echo h($password_error); ?>
                         </div>
                     <?php endif; ?>
-                    <small class="text-muted-dn d-block mt-2" style="font-size: 0.8rem;">
+                    <div class="text-muted-dn d-block mt-2" style="font-size: 0.8rem;">
                         <ul style="margin: 8px 0; padding-left: 20px;">
                             <li>At least 8 characters</li>
                             <li>Uppercase and lowercase letters</li>
                             <li>At least one number</li>
                             <li>At least one special character (!@#$%^&*)</li>
                         </ul>
-                    </small>
+                    </div>
                 </div>
 
                 <div class="mb-4">
@@ -148,8 +148,8 @@ require_once 'includes/header.php';
                             name="password_confirm"
                             placeholder="Repeat your password"
                             required>
-                        <button type="button" class="btn btn-link" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: none; background: none; cursor: pointer;" onclick="togglePasswordVisibility('password_confirm')">
-                            <i class="bi bi-eye"></i>
+                        <button type="button" class="btn btn-link" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: none; background: none; cursor: pointer;" onclick="togglePasswordVisibility('password_confirm')" aria-label="Show confirm password">
+                            <i class="bi bi-eye" aria-hidden="true"></i>
                         </button>
                     </div>
                     <?php if (!empty($confirm_error)): ?>
